@@ -17,7 +17,6 @@ class DashboardController extends Controller
         $seller = Auth::user();
         $sellerProfile = $seller->sellerProfile;
 
-        // Basic Stats
         $totalRevenue = Transaction::whereHas('serviceRequest.service', function ($query) use ($seller) {
             $query->where('seller_id', $seller->id);
         })->where('transaction_status', 'completed')->sum('base_price');
@@ -36,7 +35,6 @@ class DashboardController extends Controller
             $query->where('seller_id', $seller->id);
         })->avg('rating') ?? 0;
 
-        // Chart Data: Monthly Revenue (Last 6 Months)
         $months = [];
         $monthlyRevenue = [];
         for ($i = 5; $i >= 0; $i--) {
@@ -54,7 +52,6 @@ class DashboardController extends Controller
             $monthlyRevenue[] = $revenue;
         }
 
-        // Chart Data: Transaction Status Distribution
         $statusCounts = Transaction::whereHas('serviceRequest.service', function ($query) use ($seller) {
             $query->where('seller_id', $seller->id);
         })

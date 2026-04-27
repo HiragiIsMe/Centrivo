@@ -52,7 +52,6 @@ class MarketController extends Controller
 
     public function checkoutUI(\App\Models\Message $message)
     {
-        // Pastikan hanya user (buyer) yang bisa melihat halaman checkout
         if (\Illuminate\Support\Facades\Auth::id() !== $message->serviceRequest->user_id) {
             abort(403);
         }

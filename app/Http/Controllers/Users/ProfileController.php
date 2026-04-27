@@ -39,7 +39,6 @@ class ProfileController extends Controller
         $data = $request->only(['name', 'phone', 'address']);
 
         if ($request->hasFile('profile_photo')) {
-            // Delete old photo if exists
             if ($profile->profile_photo) {
                 Storage::disk('public')->delete($profile->profile_photo);
             }

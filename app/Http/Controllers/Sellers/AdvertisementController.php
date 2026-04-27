@@ -44,18 +44,15 @@ class AdvertisementController extends Controller
         $service = Service::where('seller_id', $seller->id)->findOrFail($request->service_id);
         $package = AdPackage::where('is_active', true)->findOrFail($request->ad_package_id);
 
-        // Check if service already has an active ad
         if ($service->activeAdvertisement) {
             return redirect()->back()->with('error', 'Layanan ini sudah memiliki iklan aktif hingga ' . $service->activeAdvertisement->end_date->format('d M Y, H:i'));
         }
 
-        // Create or find the advertisement record for this service
         $advertisement = Advertisement::firstOrCreate(
             ['service_id' => $service->id],
             ['is_active' => false]
         );
 
-        // Create the ad transaction
         $adTx = AdvertisementTransaction::create([
             'advertisement_id' => $advertisement->id,
             'seller_id' => $seller->id,
@@ -66,7 +63,6 @@ class AdvertisementController extends Controller
             'payment_method' => 'midtrans',
         ]);
 
-        // Midtrans Snap
         Config::$serverKey = config('midtrans.server_key');
         Config::$isProduction = config('midtrans.is_production');
         Config::$isSanitized = config('midtrans.is_sanitized');

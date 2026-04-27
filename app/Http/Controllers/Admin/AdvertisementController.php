@@ -32,7 +32,6 @@ class AdvertisementController extends Controller
 
         $subscribers = $subscribersQuery->paginate(15);
 
-        // Stats
         $totalActiveAds = Advertisement::where('is_active', true)->where('end_date', '>', now())->count();
         $totalRevenue = AdvertisementTransaction::where('payment_status', 'paid')->sum('amount');
 

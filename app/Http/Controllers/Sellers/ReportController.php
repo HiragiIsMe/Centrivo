@@ -15,7 +15,6 @@ class ReportController extends Controller
     {
         $seller = Auth::user();
 
-        // Get completed transactions for the table
         $transactions = Transaction::whereHas('serviceRequest.service', function ($query) use ($seller) {
             $query->where('seller_id', $seller->id);
         })
@@ -24,7 +23,6 @@ class ReportController extends Controller
         ->latest('completed_at')
         ->paginate(15);
 
-        // Stats for report page
         $totalEarned = Transaction::whereHas('serviceRequest.service', function ($query) use ($seller) {
             $query->where('seller_id', $seller->id);
         })->where('transaction_status', 'completed')->sum('base_price');
@@ -53,7 +51,6 @@ class ReportController extends Controller
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
 
-        // Header
         $sheet->setCellValue('A1', 'LAPORAN PENDAPATAN SELLER - CENTRIVO');
         $sheet->mergeCells('A1:F1');
         $sheet->getStyle('A1')->getFont()->setBold(true)->setSize(16);
@@ -61,7 +58,6 @@ class ReportController extends Controller
         $sheet->setCellValue('A2', 'Seller: ' . ($seller->sellerProfile->brand_name ?? $seller->email));
         $sheet->setCellValue('A3', 'Tanggal Export: ' . now()->format('d M Y H:i'));
 
-        // Table Headers
         $headers = ['No', 'ID Transaksi', 'Layanan', 'Pelanggan', 'Tanggal Selesai', 'Pendapatan (Rp)'];
         $column = 'A';
         foreach ($headers as $header) {
@@ -71,7 +67,6 @@ class ReportController extends Controller
             $column++;
         }
 
-        // Data
         $row = 6;
         $no = 1;
         $total = 0;
@@ -88,13 +83,11 @@ class ReportController extends Controller
             $row++;
         }
 
-        // Total
         $sheet->setCellValue('E' . $row, 'TOTAL PENDAPATAN');
         $sheet->setCellValue('F' . $row, $total);
         $sheet->getStyle('E' . $row . ':F' . $row)->getFont()->setBold(true);
         $sheet->getStyle('F' . $row)->getNumberFormat()->setFormatCode('#,##0');
 
-        // Column Auto Width
         foreach (range('A', 'F') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }

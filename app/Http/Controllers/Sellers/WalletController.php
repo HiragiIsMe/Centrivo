@@ -34,17 +34,14 @@ class WalletController extends Controller
             return redirect()->back()->with('error', 'Saldo tidak mencukupi untuk penarikan sebesar Rp ' . number_format($request->amount, 0, ',', '.'));
         }
 
-        // Cek jika ada penarikan yang masih pending
         $pending = Withdrawal::where('seller_id', $seller->id)->where('status', 'pending')->exists();
         if ($pending) {
             return redirect()->back()->with('error', 'Anda masih memiliki permintaan penarikan yang sedang diproses.');
         }
 
-        // Potong saldo
         $profile->balance -= $request->amount;
         $profile->save();
 
-        // Buat record withdrawal
         Withdrawal::create([
             'seller_id' => $seller->id,
             'amount' => $request->amount,

@@ -13,7 +13,6 @@ class WebhookController extends Controller
 {
     public function midtransCallback(Request $request)
     {
-        // Set konfigurasi midtrans
         Config::$serverKey = config('midtrans.server_key');
         Config::$isProduction = config('midtrans.is_production');
 
@@ -28,7 +27,6 @@ class WebhookController extends Controller
         $orderId = $notif->order_id;
         $fraudStatus = $notif->fraud_status;
 
-        // Determine transaction type from order_id prefix
         if (str_starts_with($orderId, 'ADV-')) {
             return $this->handleAdPayment($orderId, $transactionStatus, $paymentType, $fraudStatus);
         }
@@ -38,10 +36,9 @@ class WebhookController extends Controller
 
     private function handleServicePayment($orderId, $transactionStatus, $paymentType, $fraudStatus)
     {
-        // Extract ID: format SRV-{id}-{timestamp} or legacy {id}-{timestamp}
         $cleanId = $orderId;
         if (str_starts_with($orderId, 'SRV-')) {
-            $cleanId = substr($orderId, 4); // remove "SRV-"
+            $cleanId = substr($orderId, 4);
         }
         $idParts = explode('-', $cleanId);
         $transactionId = $idParts[0];
@@ -82,8 +79,7 @@ class WebhookController extends Controller
 
     private function handleAdPayment($orderId, $transactionStatus, $paymentType, $fraudStatus)
     {
-        // Extract ID: format ADV-{id}-{timestamp}
-        $cleanId = substr($orderId, 4); // remove "ADV-"
+        $cleanId = substr($orderId, 4);
         $idParts = explode('-', $cleanId);
         $adTxId = $idParts[0];
 
@@ -99,7 +95,6 @@ class WebhookController extends Controller
                 'paid_at' => now(),
             ]);
 
-            // Activate the advertisement
             $ad = $adTx->advertisement;
             $ad->update([
                 'is_active' => true,

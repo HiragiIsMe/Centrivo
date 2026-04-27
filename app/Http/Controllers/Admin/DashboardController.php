@@ -21,10 +21,8 @@ class DashboardController extends Controller
         
         $completedTransactions = Transaction::where('transaction_status', 'completed')->count();
         
-        // Admin Fee from Settings (fallback to 2500)
         $adminFee = Setting::where('key', 'admin_fee')->first()->value ?? 2500;
         
-        // Platform Revenue = (Admin Fee * Completed Transactions) + Paid Ad Transactions
         $serviceFeeRevenue = $completedTransactions * $adminFee;
         $adRevenue = AdvertisementTransaction::where('payment_status', 'paid')->sum('amount');
         
@@ -36,21 +34,18 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
-        // Chart Data: Monthly Platform Revenue (Last 6 Months)
         $months = [];
         $monthlyRevenueData = [];
         for ($i = 5; $i >= 0; $i--) {
             $date = Carbon::now()->subMonths($i);
             $months[] = $date->format('M');
             
-            // Monthly Service Fee Revenue
             $monthlyServiceCount = Transaction::where('transaction_status', 'completed')
                 ->whereYear('created_at', $date->year)
                 ->whereMonth('created_at', $date->month)
                 ->count();
             $monthlyServiceRev = $monthlyServiceCount * $adminFee;
             
-            // Monthly Ad Revenue
             $monthlyAdRev = AdvertisementTransaction::where('payment_status', 'paid')
                 ->whereYear('paid_at', $date->year)
                 ->whereMonth('paid_at', $date->month)
@@ -59,7 +54,6 @@ class DashboardController extends Controller
             $monthlyRevenueData[] = $monthlyServiceRev + $monthlyAdRev;
         }
 
-        // Chart Data: User & Seller Growth (Last 6 Months)
         $userGrowth = [];
         $sellerGrowth = [];
         for ($i = 5; $i >= 0; $i--) {

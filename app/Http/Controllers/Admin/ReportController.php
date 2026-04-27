@@ -18,7 +18,6 @@ class ReportController extends Controller
     {
         $spreadsheet = new Spreadsheet();
         
-        // --- SHEET 1: OVERVIEW ---
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Platform Overview');
         
@@ -54,7 +53,6 @@ class ReportController extends Controller
             $row++;
         }
 
-        // --- SHEET 2: TRANSACTIONS ---
         $txSheet = $spreadsheet->createSheet();
         $txSheet->setTitle('Service Transactions');
         $transactions = Transaction::with(['serviceRequest.service', 'serviceRequest.buyer', 'serviceRequest.service.seller'])
@@ -87,7 +85,6 @@ class ReportController extends Controller
             $row++;
         }
 
-        // --- SHEET 3: ADVERTISEMENTS ---
         $adSheet = $spreadsheet->createSheet();
         $adSheet->setTitle('Ad Transactions');
         $ads = AdvertisementTransaction::with(['advertisement.service', 'seller', 'adPackage'])
@@ -117,7 +114,6 @@ class ReportController extends Controller
             $row++;
         }
 
-        // Column Auto Width for all sheets
         foreach ($spreadsheet->getAllSheets() as $sh) {
             foreach (range('A', 'H') as $col) {
                 $sh->getColumnDimension($col)->setAutoSize(true);

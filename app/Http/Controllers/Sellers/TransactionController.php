@@ -14,7 +14,6 @@ class TransactionController extends Controller
     {
         $sellerId = Auth::id();
 
-        // Tab 1: Negosiasi Aktif (ServiceRequests where seller is this user and status is open/negotiating)
         $negotiations = ServiceRequest::with(['service.images', 'buyer.userProfile'])
             ->where('seller_id', $sellerId)
             ->whereIn('status', ['open', 'negotiating'])
@@ -28,13 +27,10 @@ class TransactionController extends Controller
             ->latest()
             ->get();
 
-        // Tab 2: Berjalan (Paid but not completed)
         $activeTransactions = $allTransactions->where('payment_status', 'paid')->where('transaction_status', '!=', 'completed');
 
-        // Tab 3: Selesai (Completed)
         $completedTransactions = $allTransactions->where('transaction_status', 'completed');
 
-        // Tab 4: Riwayat Chat (All ServiceRequests with messages)
         $chatHistories = ServiceRequest::with(['service.images', 'buyer.userProfile', 'messages' => function($q) { 
                 $q->latest(); 
             }])

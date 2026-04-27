@@ -18,13 +18,10 @@ class SearchController extends Controller
             return redirect()->route('market');
         }
 
-        // Get all active, non-banned services
         $services = Service::with(['seller.sellerProfile', 'category', 'images', 'reviews', 'activeAdvertisement'])
             ->where('status', 'active')
             ->where('is_banned', false)
             ->get();
-
-        // Tokenize query
         $queryTerms = $this->tokenize($query);
 
         if (empty($queryTerms)) {
@@ -35,7 +32,6 @@ class SearchController extends Controller
             ]);
         }
 
-        // Build corpus: each service is a "document"
         $corpus = [];
         foreach ($services as $service) {
             $nameTokens = $this->tokenize($service->service_name);
@@ -44,7 +40,6 @@ class SearchController extends Controller
                 'name_tokens' => $nameTokens,
                 'desc_tokens' => $descTokens,
                 'all_tokens' => array_merge(
-                    // Name tokens weighted 3x
                     $nameTokens, $nameTokens, $nameTokens,
                     $descTokens
                 ),
@@ -53,7 +48,6 @@ class SearchController extends Controller
 
         $totalDocs = count($corpus);
 
-        // Compute IDF for each query term
         $idf = [];
         foreach ($queryTerms as $term) {
             $docCount = 0;
@@ -62,11 +56,9 @@ class SearchController extends Controller
                     $docCount++;
                 }
             }
-            // Standard IDF formula with smoothing
             $idf[$term] = $docCount > 0 ? log(($totalDocs + 1) / ($docCount + 1)) + 1 : 0;
         }
 
-        // Compute TF-IDF score for each service
         $scores = [];
         foreach ($corpus as $serviceId => $doc) {
             $score = 0;
@@ -74,29 +66,23 @@ class SearchController extends Controller
             if ($totalTokens === 0) continue;
 
             foreach ($queryTerms as $term) {
-                // TF: frequency of term in the weighted document
                 $tf = array_count_values($doc['all_tokens'])[$term] ?? 0;
                 $tfNormalized = $tf / $totalTokens;
 
                 $score += $tfNormalized * ($idf[$term] ?? 0);
             }
 
-            // Rating bonus: add up to 15% bonus based on average rating
             $service = $services->firstWhere('id', $serviceId);
             $avgRating = $service->reviews->avg('rating') ?? 0;
             $ratingBonus = ($avgRating / 5) * 0.15 * $score;
-
-            // Advertisement boost: +1000 if service has active ad
             $adBoost = $service->activeAdvertisement ? 1000 : 0;
 
             $scores[$serviceId] = $score + $ratingBonus + $adBoost;
         }
 
-        // Filter out zero-score services and sort by score descending
         arsort($scores);
         $scores = array_filter($scores, fn($s) => $s > 0);
 
-        // Build ordered collection
         $rankedServices = collect();
         foreach ($scores as $serviceId => $score) {
             $service = $services->firstWhere('id', $serviceId);
@@ -119,11 +105,9 @@ class SearchController extends Controller
     private function tokenize(string $text): array
     {
         $text = mb_strtolower($text);
-        // Remove non-alphanumeric characters
         $text = preg_replace('/[^\w\s]/u', ' ', $text);
         $words = preg_split('/\s+/', $text, -1, PREG_SPLIT_NO_EMPTY);
 
-        // Indonesian stopwords
         $stopwords = [
             'dan', 'di', 'ke', 'dari', 'yang', 'untuk', 'dengan', 'adalah', 'ini',
             'itu', 'pada', 'ada', 'tidak', 'juga', 'akan', 'atau', 'bisa', 'lebih',

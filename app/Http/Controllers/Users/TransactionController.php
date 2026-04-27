@@ -15,7 +15,6 @@ class TransactionController extends Controller
 {
     public function __construct()
     {
-        // Set konfigurasi midtrans
         Config::$serverKey = config('midtrans.server_key');
         Config::$isProduction = config('midtrans.is_production');
         Config::$isSanitized = config('midtrans.is_sanitized');
@@ -26,7 +25,6 @@ class TransactionController extends Controller
     {
         $user = Auth::user();
 
-        // Validasi akses dan pesan
         if ($user->id !== $message->serviceRequest->user_id) {
             abort(403);
         }
@@ -39,36 +37,32 @@ class TransactionController extends Controller
             'service_type' => 'required|in:home_service,on_site'
         ]);
 
-        // Tandai pesan sudah di checkout
         $message->update(['is_checkout' => true]);
 
-        // Update service request dengan service type
         $message->serviceRequest->update([
             'service_type' => $request->service_type,
-            'status' => 'agreed' // Optional: mengubah status negosiasi
+            'status' => 'agreed'
         ]);
 
         $tax = $message->offered_price * 0.11;
         $adminFee = 2500;
         $finalPrice = $message->offered_price + $tax + $adminFee;
 
-        // Buat transaksi
         $transaction = Transaction::create([
             'request_id' => $message->serviceRequest->id,
             'base_price' => $message->offered_price,
             'tax_amount' => $tax,
             'admin_fee' => $adminFee,
             'final_price' => $finalPrice,
-            'payment_method' => 'transfer', // Default untuk Midtrans
+            'payment_method' => 'transfer',
             'transaction_status' => 'pending',
             'payment_status' => 'pending',
             'scheduled_date' => $message->scheduled_date,
         ]);
 
-        // Buat parameter untuk Midtrans Snap
         $params = array(
             'transaction_details' => array(
-                'order_id' => 'SRV-' . $transaction->id . '-' . time(), // Unique order id
+                'order_id' => 'SRV-' . $transaction->id . '-' . time(),
                 'gross_amount' => $finalPrice,
             ),
             'customer_details' => array(
@@ -101,7 +95,6 @@ class TransactionController extends Controller
         try {
             $snapToken = Snap::getSnapToken($params);
             
-            // Simpan snap token ke database
             $transaction->update(['snap_token' => $snapToken]);
 
             return redirect()->route('user.payment', $transaction->id);
@@ -164,18 +157,15 @@ class TransactionController extends Controller
             return redirect()->back()->with('error', 'Transaksi belum bisa diselesaikan sebelum tanggal pelaksanaan yang dijadwalkan.');
         }
 
-        // Update status transaksi
         $transaction->update([
             'transaction_status' => 'completed',
             'completed_at' => now(),
         ]);
 
-        // Tambahkan saldo ke seller (mengambil harga penawaran asli sebelum pajak/fee)
         $sellerProfile = $transaction->serviceRequest->seller->sellerProfile;
         $sellerProfile->balance += $transaction->base_price;
         $sellerProfile->save();
-
-        // Create Review
+        
         Review::create([
             'user_id' => $user->id,
             'service_id' => $transaction->serviceRequest->service_id,

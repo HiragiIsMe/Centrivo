@@ -54,7 +54,6 @@ class NegotiationController extends Controller
 
         $serviceRequest->load(['messages.sender.userProfile', 'service.images', 'buyer.userProfile', 'seller.sellerProfile']);
 
-        // Mark messages as read for this user
         $serviceRequest->messages()->where('sender_id', '!=', $user->id)->where('is_read', false)->update(['is_read' => true]);
 
         return view('market.negotiation', compact('serviceRequest'));
@@ -117,7 +116,6 @@ class NegotiationController extends Controller
                 ];
             });
 
-        // Mark fetched messages as read for this user
         Message::where('request_id', $serviceRequest->id)
             ->where('id', '>', $afterId)
             ->where('sender_id', '!=', $user->id)
@@ -127,7 +125,6 @@ class NegotiationController extends Controller
         return response()->json(['messages' => $messages]);
     }
 
-    // AJAX: Delete a single message (only sender can delete)
     public function deleteMessage(Message $message)
     {
         $user = Auth::user();
@@ -141,7 +138,6 @@ class NegotiationController extends Controller
         return response()->json(['success' => true]);
     }
 
-    // AJAX: Delete entire conversation
     public function deleteConversation(ServiceRequest $serviceRequest)
     {
         $user = Auth::user();

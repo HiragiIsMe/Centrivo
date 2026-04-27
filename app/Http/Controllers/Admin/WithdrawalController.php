@@ -38,7 +38,6 @@ class WithdrawalController extends Controller
         DB::transaction(function () use ($withdrawal) {
             $withdrawal->update(['status' => 'rejected']);
             
-            // Kembalikan saldo ke seller
             $profile = $withdrawal->seller->sellerProfile;
             $profile->balance += $withdrawal->amount;
             $profile->save();
