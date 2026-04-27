@@ -10,6 +10,16 @@
     <div class="mb-6 p-4 bg-green-50 border border-green-100 text-green-600 rounded-2xl font-bold text-sm">{{ session('success') }}</div>
 @endif
 
+@if($errors->any())
+    <div class="mb-6 p-4 bg-red-50 border border-red-100 text-red-600 rounded-2xl font-bold text-sm">
+        <ul class="list-disc pl-5">
+            @foreach($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
     <!-- General Settings -->
     <div class="lg:col-span-1">
@@ -103,7 +113,8 @@
             <div class="grid grid-cols-2 gap-6">
                 <div class="col-span-2">
                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Judul Utama</label>
-                    <input type="text" name="title" required class="w-full bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm font-bold outline-none focus:ring-2 focus:ring-color1/20">
+                    <input type="text" name="title" value="{{ old('title') }}" required class="w-full bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm font-bold outline-none focus:ring-2 focus:ring-color1/20">
+                    @error('title')<p class="text-red-500 text-xs mt-1 px-1">{{ $message }}</p>@enderror
                 </div>
                 <div class="col-span-2">
                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Sub-judul (Opsional)</label>
@@ -187,5 +198,12 @@
         
         modal.classList.remove('hidden');
     }
+
+    @if($errors->any())
+        document.addEventListener('DOMContentLoaded', function() {
+            // Kita tidak tahu modal mana yang error, tapi untuk kemudahan kita buka add modal
+            document.getElementById('addBillboardModal').classList.remove('hidden');
+        });
+    @endif
 </script>
 @endsection

@@ -42,6 +42,16 @@
             </div>
         @endif
 
+        @if($errors->any())
+            <div class="mb-6 p-4 bg-red-50 border border-red-100 text-red-600 rounded-2xl font-bold text-sm">
+                <ul class="list-disc pl-5">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         <div class="bg-white rounded-[32px] shadow-sm border border-gray-100 overflow-hidden">
             <div class="h-32 bg-gradient-to-r from-color1 to-color2"></div>
             <div class="px-8 pb-8">
@@ -68,14 +78,17 @@
                         <div class="space-y-2">
                             <label class="text-xs font-bold text-slate-400 uppercase tracking-widest px-1">Nama Lengkap</label>
                             <input type="text" name="name" value="{{ old('name', $profile->name) }}" class="w-full px-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-color1/20 focus:border-color1 transition-all font-bold text-slate-700">
+                            @error('name')<p class="text-red-500 text-xs mt-1 px-1">{{ $message }}</p>@enderror
                         </div>
                         <div class="space-y-2">
                             <label class="text-xs font-bold text-slate-400 uppercase tracking-widest px-1">Nomor Telepon / WA</label>
                             <input type="text" name="phone" value="{{ old('phone', $profile->phone) }}" class="w-full px-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-color1/20 focus:border-color1 transition-all font-bold text-slate-700">
+                            @error('phone')<p class="text-red-500 text-xs mt-1 px-1">{{ $message }}</p>@enderror
                         </div>
                         <div class="md:col-span-2 space-y-2">
                             <label class="text-xs font-bold text-slate-400 uppercase tracking-widest px-1">Alamat Domisili</label>
                             <textarea name="address" rows="3" class="w-full px-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl outline-none focus:ring-2 focus:ring-color1/20 focus:border-color1 transition-all font-bold text-slate-700 resize-none">{{ old('address', $profile->address) }}</textarea>
+                            @error('address')<p class="text-red-500 text-xs mt-1 px-1">{{ $message }}</p>@enderror
                         </div>
                     </div>
 

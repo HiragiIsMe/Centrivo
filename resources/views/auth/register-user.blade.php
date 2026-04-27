@@ -27,11 +27,20 @@
                 <input type="hidden" id="lat" name="latitude" value="-8.1724">
                 <input type="hidden" id="lng" name="longitude" value="113.7005">
                 
-                <input type="text" name="name" placeholder="Nama Lengkap" class="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-color1/20 outline-none" required>
-                <input type="email" name="email" placeholder="Email" class="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-color1/20 outline-none" required>
+                <input type="text" name="name" value="{{ old('name') }}" placeholder="Nama Lengkap" class="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-color1/20 outline-none" required>
+                @error('name')<span class="text-red-500 text-sm ml-2">{{ $message }}</span>@enderror
+                
+                <input type="email" name="email" value="{{ old('email') }}" placeholder="Email" class="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-color1/20 outline-none" required>
+                @error('email')<span class="text-red-500 text-sm ml-2">{{ $message }}</span>@enderror
+                
                 <input type="password" name="password" placeholder="Kata Sandi (Min. 8 Karakter)" class="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-color1/20 outline-none" required>
-                <input type="text" name="phone" placeholder="No. WhatsApp" class="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-color1/20 outline-none">
-                <input type="text" name="address" placeholder="Alamat Lengkap" class="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-color1/20 outline-none" required>
+                @error('password')<span class="text-red-500 text-sm ml-2">{{ $message }}</span>@enderror
+                
+                <input type="text" name="phone" value="{{ old('phone') }}" placeholder="No. WhatsApp" class="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-color1/20 outline-none">
+                @error('phone')<span class="text-red-500 text-sm ml-2">{{ $message }}</span>@enderror
+                
+                <input type="text" name="address" value="{{ old('address') }}" placeholder="Alamat Lengkap" class="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-color1/20 outline-none" required>
+                @error('address')<span class="text-red-500 text-sm ml-2">{{ $message }}</span>@enderror
                 
                 <div>
                     <label class="block text-sm font-bold text-gray-700 mb-2 ml-1">Titik Lokasi</label>

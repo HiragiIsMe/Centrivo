@@ -36,19 +36,23 @@
             @csrf
             <div>
                 <label class="block text-xs font-bold text-white/90 uppercase tracking-widest mb-1">Nominal Tarik</label>
-                <input type="number" name="amount" min="10000" max="{{ $balance }}" class="w-full bg-white/20 border border-white/30 rounded-xl p-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white" placeholder="Min Rp 10.000" required>
+                <input type="number" name="amount" value="{{ old('amount') }}" min="10000" max="{{ $balance }}" class="w-full bg-white/20 border border-white/30 rounded-xl p-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white" placeholder="Min Rp 10.000" required>
+                @error('amount')<p class="text-red-200 text-xs mt-1">{{ $message }}</p>@enderror
             </div>
             <div>
                 <label class="block text-xs font-bold text-white/90 uppercase tracking-widest mb-1">Nama Bank</label>
-                <input type="text" name="bank_name" class="w-full bg-white/20 border border-white/30 rounded-xl p-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white" placeholder="Contoh: BCA / Mandiri / GoPay" required>
+                <input type="text" name="bank_name" value="{{ old('bank_name') }}" class="w-full bg-white/20 border border-white/30 rounded-xl p-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white" placeholder="Contoh: BCA / Mandiri / GoPay" required>
+                @error('bank_name')<p class="text-red-200 text-xs mt-1">{{ $message }}</p>@enderror
             </div>
             <div>
                 <label class="block text-xs font-bold text-white/90 uppercase tracking-widest mb-1">Nomor Rekening</label>
-                <input type="text" name="account_number" class="w-full bg-white/20 border border-white/30 rounded-xl p-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white" placeholder="1234567890" required>
+                <input type="text" name="account_number" value="{{ old('account_number') }}" class="w-full bg-white/20 border border-white/30 rounded-xl p-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white" placeholder="1234567890" required>
+                @error('account_number')<p class="text-red-200 text-xs mt-1">{{ $message }}</p>@enderror
             </div>
             <div>
                 <label class="block text-xs font-bold text-white/90 uppercase tracking-widest mb-1">Atas Nama</label>
-                <input type="text" name="account_name" class="w-full bg-white/20 border border-white/30 rounded-xl p-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white" placeholder="Nama Pemilik Rekening" required>
+                <input type="text" name="account_name" value="{{ old('account_name') }}" class="w-full bg-white/20 border border-white/30 rounded-xl p-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white" placeholder="Nama Pemilik Rekening" required>
+                @error('account_name')<p class="text-red-200 text-xs mt-1">{{ $message }}</p>@enderror
             </div>
             <button type="submit" class="w-full bg-white text-color1 hover:bg-slate-50 font-black py-4 rounded-xl transition-colors shadow-lg mt-2">
                 Tarik Tunai

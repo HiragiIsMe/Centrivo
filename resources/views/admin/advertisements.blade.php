@@ -12,6 +12,16 @@
     </div>
 @endif
 
+@if($errors->any())
+    <div class="mb-6 p-4 bg-red-50 border border-red-100 text-red-600 rounded-2xl font-bold text-sm">
+        <ul class="list-disc pl-5">
+            @foreach($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+
 <!-- Stats -->
 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
     <div class="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm flex items-center gap-6">
@@ -67,10 +77,19 @@
             <form action="{{ route('admin.ads.store') }}" method="POST" class="space-y-4 pt-4 border-t border-gray-100">
                 @csrf
                 <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest">Tambah Paket Baru</h4>
-                <input type="text" name="name" placeholder="Nama paket (cth: Paket 7 Hari)" class="w-full bg-gray-50 border border-gray-100 rounded-xl p-3 text-sm font-medium outline-none focus:ring-2 focus:ring-color1/20" required>
+                <div class="mb-3">
+                    <input type="text" name="name" value="{{ old('name') }}" placeholder="Nama paket (cth: Paket 7 Hari)" class="w-full bg-gray-50 border border-gray-100 rounded-xl p-3 text-sm font-medium outline-none focus:ring-2 focus:ring-color1/20" required>
+                    @error('name')<p class="text-red-500 text-xs mt-1 px-1">{{ $message }}</p>@enderror
+                </div>
                 <div class="grid grid-cols-2 gap-3">
-                    <input type="number" name="duration_days" min="1" max="365" placeholder="Durasi (hari)" class="bg-gray-50 border border-gray-100 rounded-xl p-3 text-sm font-medium outline-none focus:ring-2 focus:ring-color1/20" required>
-                    <input type="number" name="price" min="1000" step="1000" placeholder="Harga (Rp)" class="bg-gray-50 border border-gray-100 rounded-xl p-3 text-sm font-medium outline-none focus:ring-2 focus:ring-color1/20" required>
+                    <div>
+                        <input type="number" name="duration_days" value="{{ old('duration_days') }}" min="1" max="365" placeholder="Durasi (hari)" class="w-full bg-gray-50 border border-gray-100 rounded-xl p-3 text-sm font-medium outline-none focus:ring-2 focus:ring-color1/20" required>
+                        @error('duration_days')<p class="text-red-500 text-xs mt-1 px-1">{{ $message }}</p>@enderror
+                    </div>
+                    <div>
+                        <input type="number" name="price" value="{{ old('price') }}" min="1000" step="1000" placeholder="Harga (Rp)" class="w-full bg-gray-50 border border-gray-100 rounded-xl p-3 text-sm font-medium outline-none focus:ring-2 focus:ring-color1/20" required>
+                        @error('price')<p class="text-red-500 text-xs mt-1 px-1">{{ $message }}</p>@enderror
+                    </div>
                 </div>
                 <button type="submit" class="w-full bg-color1 hover:bg-color2 text-white font-bold py-3 rounded-xl text-sm transition-colors shadow-sm">
                     + Tambah Paket

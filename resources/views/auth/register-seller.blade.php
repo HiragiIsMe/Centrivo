@@ -22,10 +22,17 @@
         <div class="bg-white p-10 rounded-[40px] shadow-2xl border border-white/50">
             <form action="{{ route('register.seller.post') }}" method="POST" class="space-y-5">
                 @csrf
-                <input type="text" name="business_name" placeholder="Nama Brand / Usaha" class="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-color1/20 outline-none" required>
-                <input type="email" name="email" placeholder="Email Bisnis" class="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-color1/20 outline-none" required>
+                <input type="text" name="business_name" value="{{ old('business_name') }}" placeholder="Nama Brand / Usaha" class="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-color1/20 outline-none" required>
+                @error('business_name')<span class="text-red-500 text-sm ml-2">{{ $message }}</span>@enderror
+                
+                <input type="email" name="email" value="{{ old('email') }}" placeholder="Email Bisnis" class="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-color1/20 outline-none" required>
+                @error('email')<span class="text-red-500 text-sm ml-2">{{ $message }}</span>@enderror
+                
                 <input type="password" name="password" placeholder="Kata Sandi (Min. 8 Karakter)" class="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-color1/20 outline-none" required>
-                <input type="text" name="phone" placeholder="No. WhatsApp Bisnis" class="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-color1/20 outline-none">
+                @error('password')<span class="text-red-500 text-sm ml-2">{{ $message }}</span>@enderror
+                
+                <input type="text" name="phone" value="{{ old('phone') }}" placeholder="No. WhatsApp Bisnis" class="w-full px-5 py-4 bg-gray-50 border border-gray-100 rounded-2xl focus:ring-2 focus:ring-color1/20 outline-none">
+                @error('phone')<span class="text-red-500 text-sm ml-2">{{ $message }}</span>@enderror
 
                 <button type="submit" class="w-full bg-color1 text-white py-4 rounded-2xl font-bold text-lg hover:shadow-xl transition-all">Daftar Mitra</button>
             </form>

@@ -77,15 +77,17 @@
             <div class="grid md:grid-cols-2 gap-6">
                 <div class="space-y-2">
                     <label class="text-sm font-bold text-slate-700">Service Name</label>
-                    <input type="text" name="service_name" required class="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl outline-none focus:ring-2 focus:ring-color1">
+                    <input type="text" name="service_name" value="{{ old('service_name') }}" required class="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl outline-none focus:ring-2 focus:ring-color1">
+                    @error('service_name')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                 </div>
                 <div class="space-y-2">
                     <label class="text-sm font-bold text-slate-700">Category</label>
                     <select name="category_id" required class="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl outline-none">
                         @foreach($categories as $cat)
-                            <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                            <option value="{{ $cat->id }}" {{ old('category_id') == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
                         @endforeach
                     </select>
+                    @error('category_id')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                 </div>
             </div>
 
@@ -94,20 +96,23 @@
                     <label class="text-sm font-bold text-slate-700">Location</label>
                     <select name="location_id" required class="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl outline-none">
                         @foreach($locations as $loc)
-                            <option value="{{ $loc->id }}">{{ $loc->postal_code }} - {{ $loc->province }}, {{ $loc->city }}, {{ $loc->district }}</option>
+                            <option value="{{ $loc->id }}" {{ old('location_id') == $loc->id ? 'selected' : '' }}>{{ $loc->postal_code }} - {{ $loc->province }}, {{ $loc->city }}, {{ $loc->district }}</option>
                         @endforeach
                     </select>
+                    @error('location_id')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                 </div>
                 <div class="space-y-2">
                     <label class="text-sm font-bold text-slate-700">WhatsApp Number</label>
-                    <input type="text" name="whatsapp" placeholder="08123456789" required class="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl outline-none">
+                    <input type="text" name="whatsapp" value="{{ old('whatsapp') }}" placeholder="08123456789" required class="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl outline-none">
+                    @error('whatsapp')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                 </div>
             </div>
 
             <div class="grid md:grid-cols-2 gap-6">
                 <div class="space-y-2">
                     <label class="text-sm font-bold text-slate-700">Start Price (Rp)</label>
-                    <input type="number" name="start_price" required class="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl outline-none">
+                    <input type="number" name="start_price" value="{{ old('start_price') }}" required class="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl outline-none">
+                    @error('start_price')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                 </div>
                 <div class="space-y-2">
                     <label class="text-sm font-bold text-slate-700">Service Images</label>
@@ -115,12 +120,15 @@
                     <p class="text-xs text-gray-400 mt-1">
                         Maksimal 5 gambar (jpg/png, max 2MB per gambar)
                     </p>
+                    @error('images')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                    @error('images.*')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
                 </div>
             </div>
 
             <div class="space-y-2">
                 <label class="text-sm font-bold text-slate-700">Description</label>
-                <textarea name="description" rows="3" required class="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl outline-none"></textarea>
+                <textarea name="description" rows="3" required class="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl outline-none">{{ old('description') }}</textarea>
+                @error('description')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
             </div>
 
             <div id="imagePreviewContainer" class="hidden">
@@ -137,6 +145,12 @@
 </div>
 
 <script>
+    @if($errors->any())
+        document.addEventListener('DOMContentLoaded', function() {
+            openModal('create');
+        });
+    @endif
+
     const rawServices = @json($services);
     const servicesData = rawServices.data || rawServices;
 

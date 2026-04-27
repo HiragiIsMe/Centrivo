@@ -63,12 +63,27 @@
             @csrf
             <div id="methodContainer"></div>
             <div class="grid grid-cols-2 gap-4">
-                <input type="text" name="province" id="province" required placeholder="Province" class="w-full px-5 py-3 rounded-2xl bg-gray-50 border-none outline-none">
-                <input type="text" name="city" id="city" required placeholder="City" class="w-full px-5 py-3 rounded-2xl bg-gray-50 border-none outline-none">
-                <input type="text" name="district" id="district" required placeholder="District" class="w-full px-5 py-3 rounded-2xl bg-gray-50 border-none outline-none">
-                <input type="text" name="postal_code" id="postal_code" placeholder="Postal Code" class="w-full px-5 py-3 rounded-2xl bg-gray-50 border-none outline-none">
+                <div>
+                    <input type="text" name="province" id="province" value="{{ old('province') }}" required placeholder="Province" class="w-full px-5 py-3 rounded-2xl bg-gray-50 border-none outline-none">
+                    @error('province')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                </div>
+                <div>
+                    <input type="text" name="city" id="city" value="{{ old('city') }}" required placeholder="City" class="w-full px-5 py-3 rounded-2xl bg-gray-50 border-none outline-none">
+                    @error('city')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                </div>
+                <div>
+                    <input type="text" name="district" id="district" value="{{ old('district') }}" required placeholder="District" class="w-full px-5 py-3 rounded-2xl bg-gray-50 border-none outline-none">
+                    @error('district')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                </div>
+                <div>
+                    <input type="text" name="postal_code" id="postal_code" value="{{ old('postal_code') }}" placeholder="Postal Code" class="w-full px-5 py-3 rounded-2xl bg-gray-50 border-none outline-none">
+                    @error('postal_code')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+                </div>
             </div>
-            <textarea name="address" id="address" required placeholder="Detail Address" class="w-full px-5 py-3 rounded-2xl bg-gray-50 border-none outline-none"></textarea>
+            <div>
+                <textarea name="address" id="address" required placeholder="Detail Address" class="w-full px-5 py-3 rounded-2xl bg-gray-50 border-none outline-none">{{ old('address') }}</textarea>
+                @error('address')<p class="text-red-500 text-xs mt-1">{{ $message }}</p>@enderror
+            </div>
             
             <div id="mapLoc" style="height: 200px;" class="rounded-2xl border-2 border-gray-100"></div>
             
@@ -85,6 +100,11 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
+    @if($errors->any())
+        document.addEventListener('DOMContentLoaded', function() {
+            openModal('create');
+        });
+    @endif
     let map, marker;
     function openModal(type, data = null) {
         const form = document.getElementById('locForm');
