@@ -120,6 +120,27 @@
                 <div class="mt-2 flex gap-3 text-xs font-bold text-slate-600">
                     <span class="bg-gray-100 px-2 py-1 rounded-lg">Rp {{ number_format($tx->base_price, 0, ',', '.') }}</span>
                 </div>
+                
+                @php
+                    $review = \App\Models\Review::where('user_id', $tx->serviceRequest->user_id)
+                        ->where('service_id', $tx->serviceRequest->service_id)
+                        ->latest()
+                        ->first();
+                @endphp
+                @if($review)
+                <div class="mt-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                    <div class="flex gap-1 text-yellow-400 text-xs mb-1">
+                        @for($i = 1; $i <= 5; $i++)
+                            @if($i <= $review->rating)
+                                ★
+                            @else
+                                <span class="text-gray-300">★</span>
+                            @endif
+                        @endfor
+                    </div>
+                    <p class="text-xs text-slate-600 italic">"{{ $review->comment ?? 'Tidak ada komentar' }}"</p>
+                </div>
+                @endif
             </div>
         </div>
     </div>

@@ -2,12 +2,30 @@
 
 @section('sellers_content')
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <style>
     .swiper { width: 100%; height: 250px; border-radius: 1.5rem; background: #eee; }
     .swiper-slide img { width: 100%; height: 100%; object-fit: cover; }
     .existing-image-box { position: relative; width: 100px; height: 100px; border-radius: 0.5rem; overflow: hidden; }
     .existing-image-box img { width: 100%; height: 100%; object-fit: cover; }
     .existing-image-box button { position: absolute; top: 4px; right: 4px; background: rgba(255,0,0,0.8); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px;}
+    
+    .select2-container--default .select2-selection--single {
+        height: auto;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 1rem;
+        background-color: #f9fafb;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: normal;
+        padding: 0;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        top: 50%;
+        transform: translateY(-50%);
+        right: 1.5rem;
+    }
 </style>
 
 <div class="p-8 bg-slate-50 min-h-screen">
@@ -94,7 +112,7 @@
             <div class="grid md:grid-cols-2 gap-6">
                 <div class="space-y-2">
                     <label class="text-sm font-bold text-slate-700">Location</label>
-                    <select name="location_id" required class="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl outline-none">
+                    <select name="location_id" required class="w-full px-6 py-4 bg-gray-50 border-none rounded-2xl outline-none select2-location" style="width: 100%;">
                         @foreach($locations as $loc)
                             <option value="{{ $loc->id }}" {{ old('location_id') == $loc->id ? 'selected' : '' }}>{{ $loc->postal_code }} - {{ $loc->province }}, {{ $loc->city }}, {{ $loc->district }}</option>
                         @endforeach
@@ -144,7 +162,16 @@
     </div>
 </div>
 
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
+    $(document).ready(function() {
+        $('.select2-location').select2({
+            dropdownParent: $('#serviceModal'),
+            placeholder: "Select Location"
+        });
+    });
+
     @if($errors->any())
         document.addEventListener('DOMContentLoaded', function() {
             openModal('create');
@@ -256,6 +283,34 @@
 
                 statusText.textContent = 'Status: inactive';
             }
+        });
+    }
+
+    function deleteImage(imageId, btnElement) {
+        if(!confirm('Are you sure you want to delete this image?')) return;
+        
+        fetch(`/service-images/${imageId}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.success) {
+                btnElement.closest('.existing-image-box').remove();
+                const service = servicesData.find(s => s.images.some(img => img.id === imageId));
+                if (service) {
+                    service.images = service.images.filter(img => img.id !== imageId);
+                }
+            } else {
+                alert('Failed to delete image.');
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('An error occurred.');
         });
     }
 </script>
