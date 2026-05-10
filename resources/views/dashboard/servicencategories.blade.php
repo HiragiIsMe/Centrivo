@@ -107,12 +107,10 @@
                                 </button>
                             </form>
                         @else
-                            <form action="{{ route('admin.services.ban', $service->id) }}" method="POST" class="inline">
-                                @csrf
-                                <button type="submit" class="bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap" onclick="return confirm('Apakah Anda yakin ingin mem-ban layanan ini?')">
-                                    Ban
-                                </button>
-                            </form>
+                            <button type="button" onclick="openBanServiceModal({{ $service->id }}, '{{ addslashes($service->service_name) }}')"
+                                    class="bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap">
+                                Ban Service
+                            </button>
                         @endif
                     </td>
                 </tr>
@@ -189,6 +187,40 @@
 </div>
 
 @if($tab === 'services')
+<!-- Modal Ban Service -->
+<div id="banServiceModal" class="fixed inset-0 z-[110] hidden bg-slate-900/50 backdrop-blur-sm flex items-center justify-center transition-opacity opacity-0 p-4">
+    <div class="bg-white rounded-3xl w-full max-w-md shadow-2xl transform scale-95 transition-transform duration-300" id="banServiceModalContent">
+        <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-3xl">
+            <h3 class="text-xl font-black text-slate-800">Konfirmasi Ban Layanan</h3>
+            <button onclick="closeBanServiceModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 text-slate-600 transition-all font-bold">✕</button>
+        </div>
+        <form id="banServiceForm" method="POST">
+            @csrf
+            <div class="p-6">
+                <p class="text-sm text-slate-500 mb-4 font-medium">Anda akan menonaktifkan layanan <span id="banServiceName" class="font-bold text-slate-800"></span>.</p>
+                
+                <div class="bg-yellow-50 border border-yellow-100 rounded-2xl p-4 mb-6">
+                    <p class="text-xs text-yellow-700 font-bold mb-1">💡 INFO:</p>
+                    <p class="text-[10px] text-yellow-600 font-medium leading-relaxed">
+                        Transaksi aktif yang menggunakan layanan ini akan otomatis menjadi <b>"Disputed"</b> (Bermasalah) dan dana akan dibekukan sementara.
+                    </p>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Alasan Penonaktifan</label>
+                    <textarea name="ban_reason" required rows="4" 
+                              class="w-full bg-slate-50 border border-gray-100 rounded-2xl p-4 text-sm font-medium outline-none focus:ring-2 focus:ring-red-200 transition-all resize-none"
+                              placeholder="Contoh: Layanan terdeteksi melanggar hak cipta / penipuan..."></textarea>
+                </div>
+            </div>
+            <div class="p-6 border-t border-gray-100 bg-gray-50 rounded-b-3xl flex gap-3">
+                <button type="button" onclick="closeBanServiceModal()" class="flex-1 px-6 py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-2xl font-bold transition-all text-sm">Batal</button>
+                <button type="submit" class="flex-1 px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-2xl font-bold transition-all shadow-lg shadow-red-500/20 text-sm">Ya, Ban Layanan</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- Modal Reports -->
 <div id="reportsModal" class="fixed inset-0 z-[100] hidden bg-slate-900/50 backdrop-blur-sm flex items-center justify-center transition-opacity opacity-0 p-4">
     <div class="bg-white rounded-3xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl transform scale-95 transition-transform duration-300" id="reportsModalContent">
@@ -348,6 +380,38 @@
     document.getElementById('reportsModal').addEventListener('click', function(e) {
         if (e.target === this) {
             closeReportsModal();
+        }
+    });
+
+    function openBanServiceModal(serviceId, serviceName) {
+        const modal = document.getElementById('banServiceModal');
+        const modalContent = document.getElementById('banServiceModalContent');
+        const form = document.getElementById('banServiceForm');
+        
+        document.getElementById('banServiceName').innerText = serviceName;
+        form.action = `/services-categories/${serviceId}/ban`;
+        
+        modal.classList.remove('hidden');
+        void modal.offsetWidth;
+        modal.classList.remove('opacity-0');
+        modalContent.classList.remove('scale-95');
+    }
+
+    function closeBanServiceModal() {
+        const modal = document.getElementById('banServiceModal');
+        const modalContent = document.getElementById('banServiceModalContent');
+        
+        modal.classList.add('opacity-0');
+        modalContent.classList.add('scale-95');
+        
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 300);
+    }
+
+    document.getElementById('banServiceModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeBanServiceModal();
         }
     });
     @endif

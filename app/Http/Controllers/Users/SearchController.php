@@ -18,15 +18,42 @@ class SearchController extends Controller
             return redirect()->route('market');
         }
 
-        $services = Service::with(['seller.sellerProfile', 'category', 'images', 'reviews', 'activeAdvertisement'])
+        $queryBuilder = Service::with(['seller.sellerProfile', 'category', 'images', 'reviews', 'activeAdvertisement', 'location'])
             ->where('status', 'active')
-            ->where('is_banned', false)
-            ->get();
+            ->where('is_banned', false);
+
+        $userProfile = auth()->user()->userProfile;
+        if ($userProfile && $userProfile->latitude && $userProfile->longitude) {
+            $userLat = $userProfile->latitude;
+            $userLng = $userProfile->longitude;
+            $radius = 50; // 50 km
+
+            $queryBuilder->whereHas('location', function ($q) use ($userLat, $userLng, $radius) {
+                $q->whereRaw("
+                    (6371 * acos(
+                        cos(radians(?)) * cos(radians(latitude)) * 
+                        cos(radians(longitude) - radians(?)) + 
+                        sin(radians(?)) * sin(radians(latitude))
+                    )) <= ?
+                ", [$userLat, $userLng, $userLat, $radius]);
+            });
+        }
+
+        $services = $queryBuilder->get();
+
         $queryTerms = $this->tokenize($query);
 
-        if (empty($queryTerms)) {
+        // Jika tokenize kosong (misal query terlalu pendek atau hanya stopwords), 
+        // fallback ke simple LIKE search (substring match).
+        if (empty($queryTerms) && !empty($query)) {
+            $rankedServices = $services->filter(function($svc) use ($query) {
+                return stripos($svc->service_name, $query) !== false || stripos($svc->description, $query) !== false;
+            })->map(function($svc) {
+                $svc->relevance_score = 1;
+                return $svc;
+            });
             return view('market.search', [
-                'services' => collect(),
+                'services' => $rankedServices,
                 'query' => $query,
                 'categories' => $categories,
             ]);
@@ -52,9 +79,15 @@ class SearchController extends Controller
         foreach ($queryTerms as $term) {
             $docCount = 0;
             foreach ($corpus as $doc) {
-                if (in_array($term, $doc['all_tokens'])) {
-                    $docCount++;
+                // Partial match inside TF-IDF for more robust search
+                $found = false;
+                foreach ($doc['all_tokens'] as $dt) {
+                    if (str_contains($dt, $term)) {
+                        $found = true;
+                        break;
+                    }
                 }
+                if ($found) $docCount++;
             }
             $idf[$term] = $docCount > 0 ? log(($totalDocs + 1) / ($docCount + 1)) + 1 : 0;
         }
@@ -66,7 +99,12 @@ class SearchController extends Controller
             if ($totalTokens === 0) continue;
 
             foreach ($queryTerms as $term) {
-                $tf = array_count_values($doc['all_tokens'])[$term] ?? 0;
+                $tf = 0;
+                foreach ($doc['all_tokens'] as $dt) {
+                    if (str_contains($dt, $term)) {
+                        $tf++; // Partial match frequency
+                    }
+                }
                 $tfNormalized = $tf / $totalTokens;
 
                 $score += $tfNormalized * ($idf[$term] ?? 0);
@@ -82,6 +120,16 @@ class SearchController extends Controller
 
         arsort($scores);
         $scores = array_filter($scores, fn($s) => $s > 0);
+
+        // Jika algoritma TF-IDF gagal mendapat skor (0), fallback tambahkan substring match
+        if (empty($scores)) {
+            foreach ($services as $svc) {
+                if (stripos($svc->service_name, $query) !== false || stripos($svc->description, $query) !== false) {
+                    $scores[$svc->id] = 0.5; // low score
+                }
+            }
+            arsort($scores);
+        }
 
         $rankedServices = collect();
         foreach ($scores as $serviceId => $score) {
@@ -117,7 +165,7 @@ class SearchController extends Controller
         ];
 
         return array_values(array_filter($words, function ($w) use ($stopwords) {
-            return mb_strlen($w) >= 2 && !in_array($w, $stopwords);
+            return !empty($w) && !in_array($w, $stopwords);
         }));
     }
 }

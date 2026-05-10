@@ -36,14 +36,20 @@
                 <input type="text" name="search" value="{{ request('search') }}" placeholder="Search service..." class="w-full pl-10 pr-4 py-4 rounded-2xl border-none bg-white shadow-sm outline-none focus:ring-2 focus:ring-color1">
                 <svg class="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
             </form>
-            <button onclick="openModal('create')" class="bg-color1 text-white px-8 py-4 rounded-2xl font-bold whitespace-nowrap">+ Add New Service</button>
+            @if(Auth::user()->sellerProfile?->canCreateService())
+                <button onclick="openModal('create')" class="bg-color1 text-white px-8 py-4 rounded-2xl font-bold whitespace-nowrap">+ Add New Service</button>
+            @else
+                <a href="{{ route('seller.kyc.show') }}" class="bg-slate-200 text-slate-500 px-8 py-4 rounded-2xl font-bold whitespace-nowrap flex items-center gap-2">
+                    🔒 Verifikasi Dulu
+                </a>
+            @endif
         </div>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         
         @foreach($services as $service)
-        <div class="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm">
+        <div class="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm relative overflow-hidden">
             <div class="h-40 bg-gray-100 rounded-2xl mb-4 overflow-hidden relative">
                 @if($service->images->first())
                     <img src="{{ asset('storage/'.$service->images->first()->image_path) }}" 
@@ -63,22 +69,31 @@
             
             <div class="flex gap-2 pt-4 border-t border-gray-50">
                 <button onclick="openModal('show', {{ $service->id }})" class="flex-1 py-2 bg-gray-50 rounded-xl font-bold text-sm text-slate-600">View</button>
-                <button onclick="openModal('edit', {{ $service->id }})" class="flex-1 py-2 bg-blue-50 rounded-xl font-bold text-sm text-blue-600">Edit</button>
-                <form action="{{ route('services.destroy', $service->id) }}" method="POST" class="flex-1 flex" onsubmit="return confirm('Are you sure you want to delete this service?')">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="w-full py-2 bg-red-50 rounded-xl font-bold text-sm text-red-600">Delete</button>
-                </form>
+                @if(Auth::user()->sellerProfile?->canCreateService())
+                    <button onclick="openModal('edit', {{ $service->id }})" class="flex-1 py-2 bg-blue-50 rounded-xl font-bold text-sm text-blue-600">Edit</button>
+                    <form action="{{ route('services.destroy', $service->id) }}" method="POST" class="flex-1 flex" onsubmit="return confirm('Are you sure you want to delete this service?')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="w-full py-2 bg-red-50 rounded-xl font-bold text-sm text-red-600">Delete</button>
+                    </form>
+                @else
+                    <a href="{{ route('seller.kyc.show') }}" class="flex-1 py-2 bg-slate-100 rounded-xl font-bold text-sm text-slate-400 text-center">🔒 Edit</a>
+                    <div class="flex-1 py-2 bg-slate-100 rounded-xl font-bold text-sm text-slate-400 text-center">🔒 Delete</div>
+                @endif
             </div>
             
             <div class="mt-4 flex items-center justify-between bg-slate-50 p-3 rounded-2xl">
                 <span class="text-xs font-bold text-slate-500 uppercase">Status: {{ $service->status }}</span>
-                <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" onchange="toggleStatus({{ $service->id }})" 
-                        {{ $service->status == 'active' ? 'checked' : '' }} 
-                        class="sr-only peer">
-                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-color1"></div>
-                </label>
+                @if(Auth::user()->sellerProfile?->canCreateService())
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" onchange="toggleStatus({{ $service->id }})" 
+                            {{ $service->status == 'active' ? 'checked' : '' }} 
+                            class="sr-only peer">
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-color1"></div>
+                    </label>
+                @else
+                    <span class="text-xs text-slate-400 font-bold">🔒 Terkunci</span>
+                @endif
             </div>
         </div>
         @endforeach

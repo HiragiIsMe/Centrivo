@@ -57,8 +57,32 @@
                     <a href="{{ route('users.management') }}" class="{{ request()->is('users*') ? 'sidebar-item-active' : 'text-color4 hover:bg-white/10' }} flex items-center gap-4 px-6 py-4 rounded-2xl font-bold transition-all">
                         <span class="text-xl">🧑</span> Users Management
                     </a>
-                   <a href="{{ route('admin.services.index') }}" class="{{ request()->is('services-categories*') ? 'sidebar-item-active' : 'text-color4 hover:bg-white/10' }} flex items-center gap-4 px-6 py-4 rounded-2xl font-bold transition-all">
+                    <a href="{{ route('admin.seller-verifications.index') }}" class="{{ request()->routeIs('admin.seller-verifications.*') ? 'sidebar-item-active' : 'text-color4 hover:bg-white/10' }} flex items-center justify-between px-6 py-4 rounded-2xl font-bold transition-all">
+                        <div class="flex items-center gap-4">
+                            <span class="text-xl">📝</span> Verifikasi Seller
+                        </div>
+                        @php
+                            $pendingKycCount = \App\Models\SellerProfile::where('verification_status', 'pending')->count();
+                        @endphp
+                        @if($pendingKycCount > 0)
+                            <span class="bg-yellow-400 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-md">{{ $pendingKycCount }}</span>
+                        @endif
+                    </a>
+                    <a href="{{ route('admin.services.index') }}" class="{{ request()->is('services-categories*') ? 'sidebar-item-active' : 'text-color4 hover:bg-white/10' }} flex items-center gap-4 px-6 py-4 rounded-2xl font-bold transition-all">
                         <span class="text-xl">🎟️</span> Service & Categories
+                    </a>
+                    <a href="{{ route('admin.report-center.index') }}" class="{{ request()->routeIs('admin.report-center.*') ? 'sidebar-item-active' : 'text-color4 hover:bg-white/10' }} flex items-center justify-between px-6 py-4 rounded-2xl font-bold transition-all">
+                        <div class="flex items-center gap-4">
+                            <span class="text-xl">🚨</span> Report Center
+                        </div>
+                        @php
+                            $pendingReportsCount = \App\Models\Report::whereIn('status', ['pending', 'reviewed'])->count();
+                            $disputedCount = \App\Models\Transaction::where('is_disputed', true)->count();
+                            $totalAlerts = $pendingReportsCount + $disputedCount;
+                        @endphp
+                        @if($totalAlerts > 0)
+                            <span class="bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-md">{{ $totalAlerts }}</span>
+                        @endif
                     </a>
                     <a href="{{ route('admin.service.transactions') }}" class="{{ request()->is('service-transactions*') ? 'sidebar-item-active' : 'text-color4 hover:bg-white/10' }} flex items-center gap-4 px-6 py-4 rounded-2xl font-bold transition-all">
                         <span class="text-xl">🗓️</span> Service Transactions

@@ -60,6 +60,7 @@ class Kernel extends HttpKernel
         'admin' => AdminMiddleware::class,
         'sellers' => SellersMiddleware::class,
         'users' => UsersMiddleware::class,
+        'seller_verified' => \App\Http\Middleware\EnsureSellerVerified::class,
         'auth.basic' => \Illuminate\Auth\Middleware\AuthenticateWithBasicAuth::class,
         'auth.session' => \Illuminate\Session\Middleware\AuthenticateSession::class,
         'cache.headers' => \Illuminate\Http\Middleware\SetCacheHeaders::class,

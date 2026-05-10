@@ -19,9 +19,26 @@ class MarketController extends Controller
         $categories = Category::all();
         $billboards = Billboard::where('is_active', true)->orderBy('order')->get();
 
-        $query = Service::with(['seller.sellerProfile', 'category', 'images', 'reviews', 'activeAdvertisement'])
+        $query = Service::with(['seller.sellerProfile', 'category', 'images', 'reviews', 'activeAdvertisement', 'location'])
                         ->where('status', 'active')
                         ->where('is_banned', false);
+
+        $userProfile = auth()->user()->userProfile;
+        if ($userProfile && $userProfile->latitude && $userProfile->longitude) {
+            $userLat = $userProfile->latitude;
+            $userLng = $userProfile->longitude;
+            $radius = 50; // 50 km
+
+            $query->whereHas('location', function ($q) use ($userLat, $userLng, $radius) {
+                $q->whereRaw("
+                    (6371 * acos(
+                        cos(radians(?)) * cos(radians(latitude)) * 
+                        cos(radians(longitude) - radians(?)) + 
+                        sin(radians(?)) * sin(radians(latitude))
+                    )) <= ?
+                ", [$userLat, $userLng, $userLat, $radius]);
+            });
+        }
 
         if ($categoryId) {
             $query->where('category_id', $categoryId);

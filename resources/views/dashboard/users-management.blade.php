@@ -95,12 +95,10 @@
                                 </button>
                             </form>
                         @else
-                            <form action="{{ route('users.ban', $user->id) }}" method="POST" class="inline">
-                                @csrf
-                                <button type="submit" class="bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap" onclick="return confirm('Apakah Anda yakin ingin mem-ban user ini?')">
-                                    Ban
-                                </button>
-                            </form>
+                            <button type="button" onclick="openBanModal({{ $user->id }}, '{{ addslashes($user->role === 'seller' ? ($user->sellerProfile->brand_name ?? $user->email) : ($user->userProfile->name ?? $user->email)) }}')" 
+                                    class="bg-red-100 hover:bg-red-200 text-red-700 px-4 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap">
+                                Ban User
+                            </button>
                         @endif
                     </td>
                 </tr>
@@ -120,7 +118,42 @@
     </div>
 </div>
 
-<!-- Modal Reports -->
+</div>
+
+<!-- Modal Ban Reason -->
+<div id="banModal" class="fixed inset-0 z-[110] hidden bg-slate-900/50 backdrop-blur-sm flex items-center justify-center transition-opacity opacity-0 p-4">
+    <div class="bg-white rounded-3xl w-full max-w-md shadow-2xl transform scale-95 transition-transform duration-300" id="banModalContent">
+        <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-3xl">
+            <h3 class="text-xl font-black text-slate-800">Konfirmasi Ban</h3>
+            <button onclick="closeBanModal()" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300 text-slate-600 transition-all font-bold">✕</button>
+        </div>
+        <form id="banForm" method="POST">
+            @csrf
+            <div class="p-6">
+                <p class="text-sm text-slate-500 mb-4 font-medium">Anda akan menonaktifkan akun <span id="banUserName" class="font-bold text-slate-800"></span>.</p>
+                
+                <div class="bg-yellow-50 border border-yellow-100 rounded-2xl p-4 mb-6">
+                    <p class="text-xs text-yellow-700 font-bold mb-1">💡 INFO:</p>
+                    <p class="text-[10px] text-yellow-600 font-medium leading-relaxed">
+                        Jika user ini memiliki transaksi berjalan, status transaksi akan otomatis menjadi <b>"Disputed"</b> (Bermasalah) dan dana akan dibekukan sementara.
+                    </p>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Alasan Penonaktifan</label>
+                    <textarea name="ban_reason" required rows="4" 
+                              class="w-full bg-slate-50 border border-gray-100 rounded-2xl p-4 text-sm font-medium outline-none focus:ring-2 focus:ring-red-200 transition-all resize-none"
+                              placeholder="Contoh: Terdeteksi melakukan penipuan pada transaksi #123..."></textarea>
+                    <p class="text-[10px] text-slate-400 mt-2">Alasan ini akan ditampilkan di layar user yang bersangkutan.</p>
+                </div>
+            </div>
+            <div class="p-6 border-t border-gray-100 bg-gray-50 rounded-b-3xl flex gap-3">
+                <button type="button" onclick="closeBanModal()" class="flex-1 px-6 py-3 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-2xl font-bold transition-all text-sm">Batal</button>
+                <button type="submit" class="flex-1 px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-2xl font-bold transition-all shadow-lg shadow-red-500/20 text-sm">Ya, Ban User</button>
+            </div>
+        </form>
+    </div>
+</div>
 <div id="reportsModal" class="fixed inset-0 z-[100] hidden bg-slate-900/50 backdrop-blur-sm flex items-center justify-center transition-opacity opacity-0 p-4">
     <div class="bg-white rounded-3xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl transform scale-95 transition-transform duration-300" id="reportsModalContent">
         <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-3xl">
@@ -243,9 +276,41 @@
         }, 300);
     }
 
+    function openBanModal(userId, userName) {
+        const modal = document.getElementById('banModal');
+        const modalContent = document.getElementById('banModalContent');
+        const form = document.getElementById('banForm');
+        
+        document.getElementById('banUserName').innerText = userName;
+        form.action = `/users-management/${userId}/ban`;
+        
+        modal.classList.remove('hidden');
+        void modal.offsetWidth;
+        modal.classList.remove('opacity-0');
+        modalContent.classList.remove('scale-95');
+    }
+
+    function closeBanModal() {
+        const modal = document.getElementById('banModal');
+        const modalContent = document.getElementById('banModalContent');
+        
+        modal.classList.add('opacity-0');
+        modalContent.classList.add('scale-95');
+        
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 300);
+    }
+
     document.getElementById('reportsModal').addEventListener('click', function(e) {
         if (e.target === this) {
             closeModal();
+        }
+    });
+
+    document.getElementById('banModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeBanModal();
         }
     });
 </script>

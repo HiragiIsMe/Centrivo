@@ -171,6 +171,10 @@
                                     Nego Sekarang
                                 </button>
                             </form>
+                            <!-- Tombol Laporkan Jasa -->
+                            <button onclick="openServiceReportModal({{ $service->id }}, {{ $service->seller_id }})" class="w-full flex items-center justify-center gap-2 text-red-400 hover:text-red-600 hover:bg-red-50 py-3 rounded-2xl font-bold text-sm transition-all border border-red-100 hover:border-red-200">
+                                🚩 Laporkan Jasa Ini
+                            </button>
                             @else
                             <button disabled class="w-full block text-center bg-gray-300 text-gray-500 py-4 rounded-2xl font-bold text-lg cursor-not-allowed">
                                 Ini Layanan Anda
@@ -194,6 +198,48 @@
 
         </div>
     </main>
+
+    <!-- Report Modal (Service) -->
+    <div id="serviceReportModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[200] hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-[32px] p-8 w-full max-w-md shadow-2xl transform scale-95 transition-transform duration-300" id="serviceReportModalBox">
+            <div class="flex justify-between items-center mb-6">
+                <div class="flex items-center gap-3">
+                    <span class="text-2xl">🚩</span>
+                    <h3 class="text-xl font-black text-slate-800">Laporkan Jasa</h3>
+                </div>
+                <button onclick="closeServiceReportModal()" class="text-slate-400 hover:text-red-500 font-bold text-xl">&times;</button>
+            </div>
+            <p class="text-sm text-slate-500 mb-6 font-medium">Laporan Anda akan ditinjau oleh tim Centrivo dan ditindaklanjuti sesuai kebijakan platform.</p>
+
+            <form method="POST" action="{{ route('user.report.store') }}">
+                @csrf
+                <input type="hidden" name="reported_service_id" id="srServiceId">
+                <input type="hidden" name="reported_user_id" id="srUserId">
+
+                <div class="mb-5">
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Kategori Masalah</label>
+                    <select name="reason" required class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-medium outline-none focus:ring-2 focus:ring-red-200 transition-all">
+                        <option value="" disabled selected>Pilih kategori...</option>
+                        <option value="Penipuan">Penipuan / Tidak sesuai deskripsi</option>
+                        <option value="Konten tidak pantas">Konten tidak pantas</option>
+                        <option value="Harga tidak wajar">Harga tidak wajar / Manipulatif</option>
+                        <option value="Tidak profesional">Perilaku tidak profesional</option>
+                        <option value="Kualitas buruk">Kualitas layanan sangat buruk</option>
+                        <option value="Lainnya">Lainnya</option>
+                    </select>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Detail Laporan (Opsional)</label>
+                    <textarea name="description" rows="4" class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-medium outline-none focus:ring-2 focus:ring-red-200 transition-all resize-none" placeholder="Ceritakan apa yang terjadi..."></textarea>
+                </div>
+
+                <button type="submit" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-red-500/20">
+                    Kirim Laporan
+                </button>
+            </form>
+        </div>
+    </div>
 
     @if($service->location)
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -225,6 +271,25 @@
                 dropdown.classList.add('hidden');
             }
         });
+
+        function openServiceReportModal(serviceId, sellerId) {
+            document.getElementById('srServiceId').value = serviceId;
+            document.getElementById('srUserId').value = sellerId;
+            const modal = document.getElementById('serviceReportModal');
+            const box = document.getElementById('serviceReportModalBox');
+            modal.classList.remove('hidden');
+            void modal.offsetWidth;
+            modal.classList.remove('opacity-0');
+            box.classList.remove('scale-95');
+        }
+
+        function closeServiceReportModal() {
+            const modal = document.getElementById('serviceReportModal');
+            const box = document.getElementById('serviceReportModalBox');
+            modal.classList.add('opacity-0');
+            box.classList.add('scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
     </script>
 </body>
 </html>

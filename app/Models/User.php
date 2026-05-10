@@ -14,6 +14,11 @@ class User extends Authenticatable {
         return $this->hasOne(UserProfile::class);
     }
 
+    public function location()
+    {
+        return $this->hasOne(Location::class);
+    }
+
     public function sellerProfile()
     {
         return $this->hasOne(SellerProfile::class);

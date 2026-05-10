@@ -46,6 +46,11 @@ class AuthController extends Controller
                 ->with('error', 'Akun Anda belum aktif. Silakan cek email Anda.');
         }
 
+        if ($user->is_banned) {
+            $code = $user->ban_report_code ?? '';
+            return redirect()->route('banned.notice', $code);
+        }
+
         Auth::login($user, $remember);
         $request->session()->regenerate();
 

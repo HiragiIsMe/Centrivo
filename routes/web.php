@@ -15,14 +15,17 @@ use App\Http\Controllers\Users\ChatController;
 use App\Http\Controllers\Users\SearchController;
 use App\Http\Controllers\Users\ProfileController;
 use App\Http\Controllers\Users\TransactionController as UserTransactionController;
+use App\Http\Controllers\Users\ReportController as UserReportController;
 use App\Http\Controllers\Sellers\WalletController;
 use App\Http\Controllers\Sellers\AdvertisementController as SellerAdController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\WithdrawalController as AdminWithdrawalController;
 use App\Http\Controllers\Admin\AdvertisementController as AdminAdController;
 use App\Http\Controllers\Admin\ReportController as AdminReportController;
+use App\Http\Controllers\Admin\ReportCenterController;
 use App\Http\Controllers\Admin\SettingsController as AdminSettingsController;
 use App\Http\Controllers\Sellers\ReportController as SellerReportController;
+use App\Http\Controllers\BannedController;
 use App\Http\Controllers\WebhookController;
 use Illuminate\Support\Facades\Route;
 
@@ -40,6 +43,9 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [AuthController::class, 'index'])->name('landing')->middleware('guest');
 
 Route::get('/login', [AuthController::class, 'login'])->name('login')->middleware('guest');
+
+// Halaman publik banned notice (tidak perlu login)
+Route::get('/banned/{reportCode?}', [BannedController::class, 'show'])->name('banned.notice');
 
 Route::post('/login', [AuthController::class, 'authenticate'])->name('login.post');
 
@@ -82,6 +88,12 @@ Route::middleware(['auth', 'admin'])->group(function(){
     Route::post('/users-management/{user}/ban', [UsersManagementConntroller::class, 'ban'])->name('users.ban');
     Route::post('/users-management/{user}/unban', [UsersManagementConntroller::class, 'unban'])->name('users.unban');
 
+    Route::get('/admin/report-center', [ReportCenterController::class, 'index'])->name('admin.report-center.index');
+    Route::get('/admin/report-center/{report}', [ReportCenterController::class, 'show'])->name('admin.report-center.show');
+    Route::post('/admin/report-center/{report}/status', [ReportCenterController::class, 'updateStatus'])->name('admin.report-center.status');
+    Route::post('/admin/report-center/{report}/resolve', [ReportCenterController::class, 'markResolved'])->name('admin.report-center.resolve');
+    Route::post('/admin/disputed-transactions/{transaction}/resolve', [ReportCenterController::class, 'resolveTransaction'])->name('admin.disputed-transactions.resolve');
+
     Route::get('/services-categories', [ServiceManagementController::class, 'index'])->name('admin.services.index');
     Route::get('/services-categories/{service}/reports', [ServiceManagementController::class, 'reports'])->name('admin.services.reports');
     Route::post('/services-categories/{service}/ban', [ServiceManagementController::class, 'ban'])->name('admin.services.ban');
@@ -109,6 +121,10 @@ Route::middleware(['auth', 'admin'])->group(function(){
     Route::post('/admin/billboards/{billboard}', [AdminSettingsController::class, 'updateBillboard'])->name('admin.billboards.update');
     Route::delete('/admin/billboards/{billboard}', [AdminSettingsController::class, 'destroyBillboard'])->name('admin.billboards.destroy');
     Route::post('/admin/billboards/{billboard}/toggle', [AdminSettingsController::class, 'toggleBillboard'])->name('admin.billboards.toggle');
+    Route::get('/admin/seller-verifications', [\App\Http\Controllers\Admin\SellerVerificationController::class, 'index'])->name('admin.seller-verifications.index');
+    Route::post('/admin/seller-verifications/{sellerProfile}/approve', [\App\Http\Controllers\Admin\SellerVerificationController::class, 'approve'])->name('admin.seller-verifications.approve');
+    Route::post('/admin/seller-verifications/{sellerProfile}/reject', [\App\Http\Controllers\Admin\SellerVerificationController::class, 'reject'])->name('admin.seller-verifications.reject');
+
 });
 
 Route::middleware(['auth', 'sellers'])->group(function(){
@@ -120,13 +136,24 @@ Route::middleware(['auth', 'sellers'])->group(function(){
     Route::get('/wallet-sellers', [WalletController::class, 'index'])->name('seller.wallet');
     Route::post('/wallet-sellers/withdraw', [WalletController::class, 'withdraw'])->name('seller.wallet.withdraw');
 
-    Route::resource('services', ServiceController::class);
-
-    Route::patch('services/{service}/toggle-status', [ServiceController::class, 'toggleStatus'])->name('services.toggle');
-    
-    Route::delete('service-images/{image}', [ServiceController::class, 'destroyImage'])->name('service-images.destroy');
+    // Service routes — index/show accessible to all sellers, mutations require verification
+    Route::get('services', [ServiceController::class, 'index'])->name('services.index');
+    Route::get('services/{service}', [ServiceController::class, 'show'])->name('services.show');
+    Route::middleware('seller_verified')->group(function () {
+        Route::get('services/create', [ServiceController::class, 'create'])->name('services.create');
+        Route::post('services', [ServiceController::class, 'store'])->name('services.store');
+        Route::get('services/{service}/edit', [ServiceController::class, 'edit'])->name('services.edit');
+        Route::put('services/{service}', [ServiceController::class, 'update'])->name('services.update');
+        Route::delete('services/{service}', [ServiceController::class, 'destroy'])->name('services.destroy');
+        Route::patch('services/{service}/toggle-status', [ServiceController::class, 'toggleStatus'])->name('services.toggle');
+        Route::delete('service-images/{image}', [ServiceController::class, 'destroyImage'])->name('service-images.destroy');
+    });
 
     Route::resource('locations', LocationController::class);
+
+    // KYC Verification
+    Route::get('/verify-identity', [\App\Http\Controllers\Sellers\KycController::class, 'show'])->name('seller.kyc.show');
+    Route::post('/verify-identity', [\App\Http\Controllers\Sellers\KycController::class, 'submit'])->name('seller.kyc.submit');
 
     // Advertisements
     Route::get('/advertisements-sellers', [SellerAdController::class, 'index'])->name('seller.advertisements');
@@ -136,6 +163,9 @@ Route::middleware(['auth', 'sellers'])->group(function(){
     // Income Reports
     Route::get('/reports-sellers', [SellerReportController::class, 'index'])->name('seller.reports.index');
     Route::get('/reports-sellers/export', [SellerReportController::class, 'exportExcel'])->name('seller.reports.export');
+
+    // Report User
+    Route::post('/seller/report-user', [\App\Http\Controllers\Sellers\TransactionController::class, 'reportUser'])->name('seller.report.user');
 });
 
 Route::middleware(['auth', 'users'])->group(function(){
@@ -159,6 +189,9 @@ Route::middleware(['auth', 'users'])->group(function(){
     Route::post('/profile/update', [ProfileController::class, 'update'])->name('user.profile.update');
     Route::get('/settings', [ProfileController::class, 'settings'])->name('user.settings');
     Route::post('/settings/location', [ProfileController::class, 'updateLocation'])->name('user.profile.location.update');
+
+    Route::get('/user/reports', [\App\Http\Controllers\Users\ReportController::class, 'index'])->name('user.reports.index');
+    Route::post('/user/report', [\App\Http\Controllers\Users\ReportController::class, 'store'])->name('user.report.store');
 });
 
 

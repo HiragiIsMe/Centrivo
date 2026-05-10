@@ -68,24 +68,24 @@
             </div>
 
             <h1 class="text-5xl md:text-8xl font-black leading-[1.05] mb-10 max-w-5xl tracking-tight">
-                Urusan Beres, <br><span class="text-gradient">Hati pun Tenang.</span>
+                Satu Platform, <br><span class="text-gradient">Ribuan Solusi Jasa.</span>
             </h1>
 
             <p class="text-lg md:text-2xl text-gray-500 mb-12 max-w-2xl leading-relaxed">
-                Temukan ahli profesional di sekitar Anda dalam hitungan detik. Dari servis rumah hingga kebutuhan kreatif, Centrivo siap membantu.
+                Centrivo adalah pusat layanan terpadu yang mempertemukan Anda dengan mitra profesional terdekat. Dari reparasi, desain, hingga kebutuhan harian—semua ada di satu tempat.
             </p>
             
-            <div class="w-full max-w-2xl bg-white p-2 rounded-3xl md:rounded-full shadow-2xl flex flex-col md:flex-row items-center gap-2 border border-gray-100">
+            <form action="{{ route('market.search') }}" method="GET" class="w-full max-w-2xl bg-white p-2 rounded-3xl md:rounded-full shadow-2xl flex flex-col md:flex-row items-center gap-2 border border-gray-100">
                 <div class="flex-grow flex items-center px-6 w-full">
                     <svg class="w-6 h-6 text-gray-400 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                     </svg>
-                    <input type="text" placeholder="Mau cari jasa apa hari ini?" class="w-full py-4 text-gray-700 bg-transparent focus:outline-none text-lg">
+                    <input type="text" name="q" placeholder="Cari jasa di Centrivo..." class="w-full py-4 text-gray-700 bg-transparent focus:outline-none text-lg">
                 </div>
-                <button class="w-full md:w-auto bg-color1 text-white px-10 py-4 rounded-2xl md:rounded-full text-lg font-bold hover:bg-opacity-90 transition shadow-lg shadow-color1/20">
+                <button type="submit" class="w-full md:w-auto bg-color1 text-white px-10 py-4 rounded-2xl md:rounded-full text-lg font-bold hover:bg-opacity-90 transition shadow-lg shadow-color1/20">
                     Cari Sekarang
                 </button>
-            </div>
+            </form>
         </div>
     </section>
 

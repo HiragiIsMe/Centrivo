@@ -65,7 +65,7 @@
                 Berjalan ({{ $active->count() }})
             </button>
             <button onclick="switchTab('completed')" id="tab-completed" class="px-6 py-3 rounded-xl font-bold text-sm transition-all text-slate-500 hover:bg-gray-100 whitespace-nowrap">
-                Selesai ({{ $completed->count() }})
+                Riwayat ({{ $completed->count() }})
             </button>
         </div>
 
@@ -101,9 +101,9 @@
                 @include('market.components.transaction-card', ['tx' => $tx, 'type' => 'completed'])
             @empty
                 <div class="bg-white rounded-[32px] p-12 border border-gray-100 text-center">
-                    <span class="text-6xl opacity-50 block mb-4">✅</span>
+                    <span class="text-6xl opacity-50 block mb-4">📚</span>
                     <h3 class="font-bold text-slate-700 text-xl">Belum Ada Riwayat</h3>
-                    <p class="text-slate-400 mt-2">Anda belum memiliki transaksi yang selesai.</p>
+                    <p class="text-slate-400 mt-2">Anda belum memiliki transaksi yang selesai atau dibatalkan.</p>
                 </div>
             @endforelse
         </div>
@@ -141,7 +141,56 @@
                 </div>
 
                 <button type="submit" class="w-full bg-color1 hover:bg-color2 text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-color1/20">
-                    Kirim & Selesaikan Pesanan
+                    Kirim &amp; Selesaikan Pesanan
+                </button>
+            </form>
+
+            <!-- Link laporan dari dalam review modal -->
+            <div class="mt-5 pt-4 border-t border-gray-100 text-center">
+                <p class="text-xs text-slate-400">Ada masalah dengan pesanan ini? 
+                    <button id="reviewReportLink" onclick="switchToReport()" class="text-red-500 font-bold hover:underline">Laporkan</button>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Modal -->
+    <div id="reportModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-[32px] p-8 w-full max-w-md shadow-2xl transform scale-95 transition-transform duration-300" id="reportModalBox">
+            <div class="flex justify-between items-center mb-6">
+                <div class="flex items-center gap-3">
+                    <span class="text-2xl">🚩</span>
+                    <h3 class="text-xl font-black text-slate-800">Buat Laporan</h3>
+                </div>
+                <button onclick="closeReportModal()" class="text-slate-400 hover:text-red-500 font-bold text-xl">&times;</button>
+            </div>
+            <p class="text-sm text-slate-500 mb-6 font-medium">Laporan Anda akan ditinjau oleh tim Centrivo dan ditindaklanjuti sesuai kebijakan platform.</p>
+
+            <form id="reportForm" method="POST" action="{{ route('user.report.store') }}">
+                @csrf
+                <input type="hidden" name="reported_user_id" id="reportUserId">
+                <input type="hidden" name="reported_service_id" id="reportServiceId">
+
+                <div class="mb-5">
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Kategori Masalah</label>
+                    <select name="reason" required class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-medium outline-none focus:ring-2 focus:ring-red-200 transition-all">
+                        <option value="" disabled selected>Pilih kategori...</option>
+                        <option value="Penipuan">Penipuan / Tidak sesuai deskripsi</option>
+                        <option value="Konten tidak pantas">Konten tidak pantas</option>
+                        <option value="Harga tidak wajar">Harga tidak wajar / Manipulatif</option>
+                        <option value="Tidak profesional">Perilaku tidak profesional</option>
+                        <option value="Kualitas buruk">Kualitas layanan sangat buruk</option>
+                        <option value="Lainnya">Lainnya</option>
+                    </select>
+                </div>
+
+                <div class="mb-6">
+                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Detail Laporan (Opsional)</label>
+                    <textarea name="description" rows="4" class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-medium outline-none focus:ring-2 focus:ring-red-200 transition-all resize-none" placeholder="Ceritakan apa yang terjadi..."></textarea>
+                </div>
+
+                <button type="submit" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-red-500/20">
+                    Kirim Laporan
                 </button>
             </form>
         </div>
@@ -163,16 +212,21 @@
             });
         }
 
-        function openReviewModal(transactionId, sellerName) {
+        // Simpan data sementara untuk switch dari review ke report
+        let _currentSellerId = null;
+        let _currentServiceId = null;
+
+        function openReviewModal(transactionId, sellerName, serviceId) {
             const modal = document.getElementById('reviewModal');
             const box = document.getElementById('reviewModalBox');
             document.getElementById('modalSellerName').innerText = sellerName;
+            _currentSellerId = null; // akan diisi dari card
+            _currentServiceId = serviceId;
             
             // Set form action dynamically
             document.getElementById('reviewForm').action = `/user/transactions/${transactionId}/complete`;
             
             modal.classList.remove('hidden');
-            // Trigger reflow
             void modal.offsetWidth;
             modal.classList.remove('opacity-0');
             box.classList.remove('scale-95');
@@ -183,9 +237,35 @@
             const box = document.getElementById('reviewModalBox');
             modal.classList.add('opacity-0');
             box.classList.add('scale-95');
-            setTimeout(() => {
-                modal.classList.add('hidden');
-            }, 300);
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
+        function openReportModal(userId, serviceId, fromReview) {
+            closeReviewModal();
+            const modal = document.getElementById('reportModal');
+            const box = document.getElementById('reportModalBox');
+
+            // Set hidden inputs
+            document.getElementById('reportUserId').value = userId || '';
+            document.getElementById('reportServiceId').value = serviceId || '';
+
+            modal.classList.remove('hidden');
+            void modal.offsetWidth;
+            modal.classList.remove('opacity-0');
+            box.classList.remove('scale-95');
+        }
+
+        function closeReportModal() {
+            const modal = document.getElementById('reportModal');
+            const box = document.getElementById('reportModalBox');
+            modal.classList.add('opacity-0');
+            box.classList.add('scale-95');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
+        // Dipanggil dari link "Ada masalah? Laporkan" dalam Review Modal
+        function switchToReport() {
+            openReportModal(_currentSellerId, _currentServiceId, true);
         }
     </script>
 </body>

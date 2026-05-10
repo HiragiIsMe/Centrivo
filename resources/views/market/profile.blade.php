@@ -118,6 +118,22 @@
                 </div>
             </div>
         </div>
+
+        <div class="mt-8">
+            <a href="{{ route('user.reports.index') }}" class="flex items-center justify-between bg-white rounded-[24px] p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all group">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-xl text-orange-500 group-hover:bg-orange-500 group-hover:text-white transition-all">
+                        📋
+                    </div>
+                    <div>
+                        <h3 class="font-black text-slate-800">Riwayat Laporan Saya</h3>
+                        <p class="text-xs text-slate-500 font-medium">Pantau status laporan yang Anda kirim ke admin</p>
+                    </div>
+                </div>
+                <span class="text-slate-300 group-hover:text-orange-500 group-hover:translate-x-1 transition-all">→</span>
+            </a>
+        </div>
+
     </main>
 
 </body>

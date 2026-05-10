@@ -16,7 +16,7 @@
         Berjalan ({{ $activeTransactions->count() }})
     </button>
     <button onclick="switchTab('selesai')" id="tab-selesai" class="px-6 py-3 rounded-xl font-bold text-sm transition-all text-slate-500 hover:bg-gray-100 whitespace-nowrap">
-        Selesai ({{ $completedTransactions->count() }})
+        Riwayat Pesanan ({{ $completedTransactions->count() }})
     </button>
     <button onclick="switchTab('riwayat')" id="tab-riwayat" class="px-6 py-3 rounded-xl font-bold text-sm transition-all text-slate-500 hover:bg-gray-100 whitespace-nowrap relative">
         Riwayat Chat ({{ $chatHistories->count() }})
@@ -76,7 +76,12 @@
                 🏃
             </div>
             <div>
-                <p class="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-1">ID Transaksi: #{{ $tx->id }}</p>
+                <div class="flex items-center gap-2 mb-1">
+                    <p class="text-[10px] font-bold text-blue-600 uppercase tracking-widest">ID Transaksi: #{{ $tx->id }}</p>
+                    @if($tx->is_disputed)
+                        <span class="text-[10px] font-black bg-red-100 text-red-500 px-2 py-0.5 rounded-lg border border-red-200 uppercase">⚠️ Bermasalah</span>
+                    @endif
+                </div>
                 <h3 class="font-bold text-slate-800 line-clamp-1 text-lg leading-tight">{{ $tx->serviceRequest->service->service_name }}</h3>
                 <p class="text-sm font-medium text-slate-500 mt-1">Pelanggan: <span class="font-bold text-slate-700">{{ $tx->serviceRequest->buyer->userProfile->name ?? 'User' }}</span></p>
                 
@@ -93,7 +98,22 @@
             </div>
         </div>
         <div class="flex-shrink-0 flex flex-col items-end gap-2">
-            <a href="{{ route('negotiation.show', $tx->serviceRequest->id) }}" class="text-sm font-bold text-color1 hover:underline">Chat Pelanggan</a>
+            @if($tx->is_disputed)
+                @php
+                    $waMessage = urlencode("Halo admin, transaksi saya #" . $tx->id . " bermasalah (Disputed). Mohon bantuannya.");
+                    $waUrl = "https://wa.me/" . ($global_settings['admin_whatsapp'] ?? '628123456789') . "?text=" . $waMessage;
+                @endphp
+                <a href="{{ $waUrl }}" target="_blank" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl text-xs transition-colors shadow-sm text-center">
+                    Hubungi Admin
+                </a>
+                <p class="text-[10px] font-bold text-red-500">Menunggu Review Admin</p>
+            @else
+                <a href="{{ route('negotiation.show', $tx->serviceRequest->id) }}" class="text-sm font-bold text-color1 hover:underline">Chat Pelanggan</a>
+                <button onclick="openReportUserModal({{ $tx->serviceRequest->buyer->id }}, '{{ addslashes($tx->serviceRequest->buyer->userProfile->name ?? 'User') }}')" 
+                        class="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-500 font-bold rounded-xl text-xs transition-colors border border-red-100">
+                    🚩 Laporkan Pelanggan
+                </button>
+            @endif
         </div>
     </div>
     @empty
@@ -110,11 +130,19 @@
     @forelse($completedTransactions as $tx)
     <div class="bg-white rounded-[24px] p-6 border border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-sm hover:shadow-md transition-shadow">
         <div class="flex gap-4 items-center">
-            <div class="w-16 h-16 bg-green-100 text-green-500 rounded-2xl flex-shrink-0 flex items-center justify-center text-2xl font-bold">
-                ✓
-            </div>
-            <div>
-                <p class="text-[10px] font-bold text-green-600 uppercase tracking-widest mb-1">ID Transaksi: #{{ $tx->id }}</p>
+            @if($tx->transaction_status == 'cancelled')
+                <div class="w-16 h-16 bg-red-100 text-red-500 rounded-2xl flex-shrink-0 flex items-center justify-center text-2xl font-bold">
+                    ✕
+                </div>
+                <div>
+                    <p class="text-[10px] font-bold text-red-600 uppercase tracking-widest mb-1">ID Transaksi: #{{ $tx->id }} (DIBATALKAN)</p>
+            @else
+                <div class="w-16 h-16 bg-green-100 text-green-500 rounded-2xl flex-shrink-0 flex items-center justify-center text-2xl font-bold">
+                    ✓
+                </div>
+                <div>
+                    <p class="text-[10px] font-bold text-green-600 uppercase tracking-widest mb-1">ID Transaksi: #{{ $tx->id }}</p>
+            @endif
                 <h3 class="font-bold text-slate-800 line-clamp-1 text-lg leading-tight">{{ $tx->serviceRequest->service->service_name }}</h3>
                 <p class="text-sm font-medium text-slate-500 mt-1">Pelanggan: <span class="font-bold text-slate-700">{{ $tx->serviceRequest->buyer->userProfile->name ?? 'User' }}</span></p>
                 <div class="mt-2 flex gap-3 text-xs font-bold text-slate-600">
@@ -146,8 +174,9 @@
     </div>
     @empty
     <div class="bg-white rounded-[24px] p-10 border border-gray-100 text-center">
-        <span class="text-4xl opacity-50 block mb-3">✅</span>
-        <h3 class="font-bold text-slate-700 text-lg">Belum Ada Transaksi Selesai</h3>
+        <span class="text-4xl opacity-50 block mb-3">📚</span>
+        <h3 class="font-bold text-slate-700 text-lg">Belum Ada Riwayat Pesanan</h3>
+        <p class="text-slate-400 mt-2 text-sm">Anda belum memiliki transaksi yang selesai atau dibatalkan.</p>
     </div>
     @endforelse
 </div>
@@ -203,6 +232,47 @@
     @endforelse
 </div>
 
+<!-- Report User Modal -->
+<div id="reportUserModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+    <div class="bg-white rounded-[32px] p-8 w-full max-w-md shadow-2xl transform scale-95 transition-transform duration-300" id="reportUserModalBox">
+        <div class="flex justify-between items-center mb-6">
+            <div class="flex items-center gap-3">
+                <span class="text-2xl">🚩</span>
+                <h3 class="text-xl font-black text-slate-800">Laporkan Pelanggan</h3>
+            </div>
+            <button onclick="closeReportUserModal()" class="text-slate-400 hover:text-red-500 font-bold text-xl">&times;</button>
+        </div>
+        <p class="text-sm text-slate-500 mb-1 font-medium">Melaporkan: <span id="reportUserName" class="font-black text-slate-800"></span></p>
+        <p class="text-xs text-slate-400 mb-6">Laporan akan ditinjau oleh tim Centrivo dalam waktu dekat.</p>
+
+        <form method="POST" action="{{ route('seller.report.user') }}">
+            @csrf
+            <input type="hidden" name="reported_user_id" id="reportUserId">
+
+            <div class="mb-5">
+                <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Kategori Masalah</label>
+                <select name="reason" required class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-medium outline-none focus:ring-2 focus:ring-red-200 transition-all">
+                    <option value="" disabled selected>Pilih kategori...</option>
+                    <option value="Tidak kooperatif">Tidak kooperatif / Tidak datang</option>
+                    <option value="Pembayaran bermasalah">Masalah pembayaran</option>
+                    <option value="Perilaku tidak sopan">Perilaku tidak sopan / Kasar</option>
+                    <option value="Penipuan">Indikasi penipuan</option>
+                    <option value="Lainnya">Lainnya</option>
+                </select>
+            </div>
+
+            <div class="mb-6">
+                <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Detail Laporan (Opsional)</label>
+                <textarea name="description" rows="4" class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-4 text-sm font-medium outline-none focus:ring-2 focus:ring-red-200 transition-all resize-none" placeholder="Ceritakan apa yang terjadi..."></textarea>
+            </div>
+
+            <button type="submit" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-red-500/20">
+                Kirim Laporan
+            </button>
+        </form>
+    </div>
+</div>
+
 <script>
     function switchTab(tab) {
         const tabs = ['negosiasi', 'berjalan', 'selesai', 'riwayat'];
@@ -235,6 +305,25 @@
                 setTimeout(() => el.remove(), 300);
             }
         } catch (err) { console.error(err); }
+    }
+
+    function openReportUserModal(userId, userName) {
+        document.getElementById('reportUserId').value = userId;
+        document.getElementById('reportUserName').innerText = userName;
+        const modal = document.getElementById('reportUserModal');
+        const box = document.getElementById('reportUserModalBox');
+        modal.classList.remove('hidden');
+        void modal.offsetWidth;
+        modal.classList.remove('opacity-0');
+        box.classList.remove('scale-95');
+    }
+
+    function closeReportUserModal() {
+        const modal = document.getElementById('reportUserModal');
+        const box = document.getElementById('reportUserModalBox');
+        modal.classList.add('opacity-0');
+        box.classList.add('scale-95');
+        setTimeout(() => modal.classList.add('hidden'), 300);
     }
 </script>
 @endsection

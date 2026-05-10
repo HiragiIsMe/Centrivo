@@ -16,10 +16,20 @@ class UsersMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if(Auth::user()->role == 'user') 
-        {
+        $user = Auth::user();
+
+        if ($user->role == 'user') {
+            if ($user->is_banned) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+                $code = $user->ban_report_code ?? '';
+                return redirect()->route('banned.notice', $code)
+                    ->withErrors(['email' => 'Akun Anda telah dinonaktifkan oleh administrator.']);
+            }
             return $next($request);
         }
+
         return abort(403, 'Anda tidak memiliki akses ke halaman ini.');
     }
 }

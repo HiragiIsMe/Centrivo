@@ -129,8 +129,9 @@ class TransactionController extends Controller
             ->get();
 
         $pending = $allTransactions->where('payment_status', 'pending');
-        $active = $allTransactions->where('payment_status', 'paid')->where('transaction_status', '!=', 'completed');
-        $completed = $allTransactions->where('transaction_status', 'completed');
+        $active = $allTransactions->where('payment_status', 'paid')
+                                  ->whereNotIn('transaction_status', ['completed', 'cancelled']);
+        $completed = $allTransactions->whereIn('transaction_status', ['completed', 'cancelled']);
 
         return view('market.transactions', compact('pending', 'active', 'completed'));
     }

@@ -45,15 +45,52 @@ class ServiceManagementController extends Controller
         ]);
     }
 
-    public function ban(Service $service)
+    public function ban(Request $request, Service $service)
     {
-        $service->update(['is_banned' => true]);
-        return back()->with('success', 'Service has been banned successfully.');
+        $request->validate([
+            'ban_reason' => 'nullable|string|max:1000',
+        ]);
+
+        $banReason = $request->ban_reason ?? 'Layanan ini melanggar kebijakan platform.';
+        $reportCode = $request->input('report_code') ?? \App\Models\Report::generateCode();
+
+        // Cari transaksi aktif untuk jasa ini
+        $affectedTxs = \App\Models\Transaction::with('serviceRequest')
+            ->whereHas('serviceRequest', fn($q) => $q->where('service_id', $service->id))
+            ->where('payment_status', 'paid')
+            ->whereNotIn('transaction_status', ['completed', 'cancelled'])
+            ->where('is_disputed', false)
+            ->get();
+
+        $firstAffectedTxId = null;
+        foreach ($affectedTxs as $tx) {
+            $tx->update([
+                'is_disputed' => true,
+                'disputed_at' => now(),
+                'disputed_by' => 'service_ban',
+            ]);
+            if (!$firstAffectedTxId) $firstAffectedTxId = $tx->id;
+        }
+
+        $service->update([
+            'is_banned' => true,
+            'ban_report_code' => $reportCode,
+            'ban_reason' => $banReason,
+        ]);
+
+        $msg = "Layanan berhasil di-ban. Kode: {$reportCode}.";
+        if (count($affectedTxs) > 0) $msg .= " " . count($affectedTxs) . " transaksi aktif ditandai disputed.";
+
+        return back()->with('success', $msg);
     }
 
     public function unban(Service $service)
     {
-        $service->update(['is_banned' => false]);
+        $service->update([
+            'is_banned' => false,
+            'ban_report_code' => null,
+            'ban_reason' => null,
+        ]);
         return back()->with('success', 'Service has been unbanned successfully.');
     }
 }
