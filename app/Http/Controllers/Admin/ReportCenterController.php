@@ -78,7 +78,6 @@ class ReportCenterController extends Controller
     {
         $report->update(['status' => 'resolved']);
 
-        // Jika ada transaksi terkait yang disputed, tawarkan untuk un-dispute
         if ($report->relatedTransaction && $report->relatedTransaction->is_disputed) {
             $report->relatedTransaction->update([
                 'is_disputed'  => false,

@@ -54,7 +54,6 @@ class ServiceManagementController extends Controller
         $banReason = $request->ban_reason ?? 'Layanan ini melanggar kebijakan platform.';
         $reportCode = $request->input('report_code') ?? \App\Models\Report::generateCode();
 
-        // Cari transaksi aktif untuk jasa ini
         $affectedTxs = \App\Models\Transaction::with('serviceRequest')
             ->whereHas('serviceRequest', fn($q) => $q->where('service_id', $service->id))
             ->where('payment_status', 'paid')

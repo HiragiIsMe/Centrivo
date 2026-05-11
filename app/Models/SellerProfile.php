@@ -16,8 +16,6 @@ class SellerProfile extends Model
         return $this->belongsTo(\App\Models\User::class);
     }
 
-
-
     public function isVerified(): bool
     {
         return $this->verification_status === 'verified';

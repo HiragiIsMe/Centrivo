@@ -27,7 +27,7 @@ class MarketController extends Controller
         if ($userProfile && $userProfile->latitude && $userProfile->longitude) {
             $userLat = $userProfile->latitude;
             $userLng = $userProfile->longitude;
-            $radius = 50; // 50 km
+            $radius = 50;
 
             $query->whereHas('location', function ($q) use ($userLat, $userLng, $radius) {
                 $q->whereRaw("

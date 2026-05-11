@@ -29,17 +29,14 @@ class ReportController extends Controller
             'description'        => 'nullable|string|max:2000',
         ]);
 
-        // Pastikan salah satu target laporan ada
         if (!$request->reported_service_id && !$request->reported_user_id) {
             return back()->withErrors(['reason' => 'Target laporan tidak valid.']);
         }
 
-        // Cegah melaporkan diri sendiri
         if ($request->reported_user_id && $request->reported_user_id == Auth::id()) {
             return back()->withErrors(['reason' => 'Anda tidak dapat melaporkan diri sendiri.']);
         }
 
-        // Cegah laporan duplikat (dalam 24 jam)
         $existing = Report::where('reporter_id', Auth::id())
             ->when($request->reported_service_id, fn($q) => $q->where('reported_service_id', $request->reported_service_id))
             ->when($request->reported_user_id, fn($q) => $q->where('reported_user_id', $request->reported_user_id))

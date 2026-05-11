@@ -21,7 +21,6 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // Seed default billboards
         DB::table('billboards')->insert([
             ['title' => 'Diskon Servis AC 20%', 'subtitle' => 'Khusus area Sumbersari dan sekitarnya.', 'gradient_from' => '#628ECB', 'gradient_to' => '#8AAEE0', 'image_path' => null, 'order' => 1, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()],
             ['title' => 'Buka Puasa Lebih Praktis', 'subtitle' => 'Cari katering harian terbaik untuk Ramadan.', 'gradient_from' => '#6366f1', 'gradient_to' => '#a855f7', 'image_path' => null, 'order' => 2, 'is_active' => true, 'created_at' => now(), 'updated_at' => now()],

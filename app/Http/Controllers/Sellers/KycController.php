@@ -19,7 +19,6 @@ class KycController extends Controller
     {
         $sellerProfile = Auth::user()->sellerProfile;
 
-        // Jika sudah verified atau pending, tidak bisa re-submit
         if ($sellerProfile->verification_status === 'verified') {
             return back()->with('success', 'Akun Anda sudah terverifikasi.');
         }
@@ -39,7 +38,6 @@ class KycController extends Controller
             'selfie.max' => 'Ukuran foto selfie maksimal 5MB.',
         ]);
 
-        // Hapus file lama jika ada
         if ($sellerProfile->ktp_path) {
             Storage::disk('public')->delete($sellerProfile->ktp_path);
         }

@@ -13,12 +13,11 @@ return new class extends Migration
             $table->id();
             $table->string('key')->unique();
             $table->text('value')->nullable();
-            $table->string('type')->default('text'); // text, number, image
+            $table->string('type')->default('text'); 
             $table->string('label')->nullable();
             $table->timestamps();
         });
 
-        // Seed default settings
         DB::table('settings')->insert([
             ['key' => 'platform_name', 'value' => 'Centrivo', 'type' => 'text', 'label' => 'Nama Platform', 'created_at' => now(), 'updated_at' => now()],
             ['key' => 'admin_fee', 'value' => '2500', 'type' => 'number', 'label' => 'Biaya Admin per Transaksi (Rp)', 'created_at' => now(), 'updated_at' => now()],

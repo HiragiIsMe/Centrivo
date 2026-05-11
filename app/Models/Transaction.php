@@ -26,17 +26,11 @@ class Transaction extends Model
         return $this->hasOne(Report::class, 'related_transaction_id');
     }
 
-    /**
-     * Scope: transaksi yang sedang disputed
-     */
     public function scopeDisputed($query)
     {
         return $query->where('is_disputed', true);
     }
 
-    /**
-     * Scope: transaksi aktif (sudah dibayar, belum selesai, tidak disputed)
-     */
     public function scopeActiveNormal($query)
     {
         return $query->where('payment_status', 'paid')
@@ -44,9 +38,6 @@ class Transaction extends Model
                      ->where('is_disputed', false);
     }
 
-    /**
-     * Apakah transaksi ini sedang bermasalah?
-     */
     public function getIsDisputedAttribute($value): bool
     {
         return (bool) $value;

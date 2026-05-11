@@ -8,10 +8,6 @@ use Illuminate\Http\Request;
 
 class BannedController extends Controller
 {
-    /**
-     * Tampilkan halaman banned notice.
-     * Halaman ini publik — tidak memerlukan auth.
-     */
     public function show($reportCode = null)
     {
         $adminWa  = Setting::where('key', 'admin_whatsapp')->value('value') ?? '628123456789';

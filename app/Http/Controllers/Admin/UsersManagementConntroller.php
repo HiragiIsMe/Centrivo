@@ -65,12 +65,10 @@ class UsersManagementConntroller extends Controller
         $banReason   = $request->ban_reason ?? 'Melanggar Ketentuan Layanan Centrivo.';
         $reportCode  = $request->input('report_code') ?? Report::generateCode();
 
-        // Cari semua transaksi aktif yang terdampak
         $disputedBy  = $user->role === 'user' ? 'user_ban' : 'seller_ban';
         $affectedTxs = [];
 
         if ($user->role === 'user') {
-            // Transaksi yang sedang berjalan dimana user ini sebagai pembeli
             $affectedTxs = Transaction::with('serviceRequest')
                 ->whereHas('serviceRequest', fn($q) => $q->where('user_id', $user->id))
                 ->where('payment_status', 'paid')
@@ -78,7 +76,6 @@ class UsersManagementConntroller extends Controller
                 ->where('is_disputed', false)
                 ->get();
         } elseif ($user->role === 'seller') {
-            // Transaksi yang sedang berjalan dimana user ini sebagai seller
             $affectedTxs = Transaction::with('serviceRequest')
                 ->whereHas('serviceRequest', fn($q) => $q->where('seller_id', $user->id))
                 ->where('payment_status', 'paid')
@@ -87,7 +84,6 @@ class UsersManagementConntroller extends Controller
                 ->get();
         }
 
-        // Tandai semua transaksi terkait sebagai disputed
         $firstAffectedTxId = null;
         foreach ($affectedTxs as $tx) {
             $tx->update([
@@ -100,9 +96,6 @@ class UsersManagementConntroller extends Controller
             }
         }
 
-        // Hapus: Tidak perlu lagi membuat report untuk admin ban.
-
-        // Update user
         $user->update([
             'is_banned'        => true,
             'banned_at'        => now(),
@@ -127,8 +120,6 @@ class UsersManagementConntroller extends Controller
             'ban_report_code' => null,
             'ban_reason'      => null,
         ]);
-
-        // Tidak perlu lagi update status laporan karena tidak ada laporan admin
 
         return back()->with('success', 'User berhasil di-unban.');
     }
