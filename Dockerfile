@@ -1,20 +1,3 @@
-FROM composer:2.6 AS composer-build
-
-WORKDIR /app
-
-COPY composer.json composer.lock ./
-RUN composer install \
-    --no-dev \
-    --no-interaction \
-    --no-autoloader \
-    --prefer-dist \
-    --ignore-platform-reqs
-
-COPY . .
-RUN rm -f bootstrap/cache/*.php
-
-RUN DB_CONNECTION=sqlite DB_DATABASE=:memory: composer dump-autoload --optimize --verbose
-
 FROM php:8.3-fpm-alpine AS production
 
 RUN apk add --no-cache \
@@ -28,6 +11,8 @@ RUN apk add --no-cache \
     oniguruma-dev \
     icu-dev \
     libxml2-dev \
+    curl-dev \
+    linux-headers \
     redis \
     && rm -rf /var/cache/apk/*
 
@@ -35,17 +20,12 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
         pdo \
         pdo_mysql \
-        mbstring \
         exif \
         pcntl \
         bcmath \
         gd \
         zip \
         intl \
-        curl \
-        xml \
-        dom \
-        simplexml \
         opcache
 
 RUN pecl install redis && docker-php-ext-enable redis
