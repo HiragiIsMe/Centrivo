@@ -13,8 +13,6 @@ RUN composer install \
 COPY . .
 RUN rm -f bootstrap/cache/*.php
 
-RUN composer dump-autoload --optimize --verbose
-
 RUN DB_CONNECTION=sqlite DB_DATABASE=:memory: composer dump-autoload --optimize --verbose
 
 FROM php:8.3-fpm-alpine AS production
