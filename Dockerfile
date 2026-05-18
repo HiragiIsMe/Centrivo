@@ -1,4 +1,3 @@
-
 FROM composer:2.6 AS composer-build
 
 WORKDIR /app
@@ -8,20 +7,12 @@ RUN composer install \
     --no-dev \
     --no-interaction \
     --no-autoloader \
-    --prefer-dist
+    --prefer-dist \
+    --ignore-platform-reqs
 
 COPY . .
 RUN composer dump-autoload --optimize
 
-FROM node:20-alpine AS node-build
-
-WORKDIR /app
-COPY package.json package-lock.json ./
-RUN npm ci
-
-COPY . .
-COPY --from=composer-build /app/vendor ./vendor
-RUN npm run build
 
 FROM php:8.3-fpm-alpine AS production
 
@@ -35,7 +26,6 @@ RUN apk add --no-cache \
     libzip-dev \
     oniguruma-dev \
     icu-dev \
-    libcurl \
     libxml2-dev \
     redis \
     && rm -rf /var/cache/apk/*
@@ -70,11 +60,11 @@ COPY docker/supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 WORKDIR /var/www/html
 
 COPY --from=composer-build /app .
-COPY --from=node-build /app/public/build ./public/build
+
 
 RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 /var/www/html/storage \
-    && chmod -R 755 /var/www/html/bootstrap/cache
+    && chmod -R 775 /var/www/html/storage \
+    && chmod -R 775 /var/www/html/bootstrap/cache
 
 COPY docker/start.sh /start.sh
 RUN chmod +x /start.sh

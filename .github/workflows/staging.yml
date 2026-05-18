@@ -48,16 +48,6 @@ jobs:
           DB_CONNECTION: sqlite
           DB_DATABASE: ":memory:"
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install NPM & Build assets
-        run: |
-          npm install
-          npm run build
-
       - name: Copy .env
         run: |
           cp .env.example .env.testing
