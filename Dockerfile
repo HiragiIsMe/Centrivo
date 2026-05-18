@@ -23,7 +23,7 @@ COPY . .
 COPY --from=composer-build /app/vendor ./vendor
 RUN npm run build
 
-FROM php:8.2-fpm-alpine AS production
+FROM php:8.3-fpm-alpine AS production
 
 RUN apk add --no-cache \
     nginx \
