@@ -1,0 +1,183 @@
+name: 🧪 Deploy to Staging
+
+on:
+  push:
+    branches:
+      - develop
+      - staging
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  test:
+    name: 🧪 Run Tests
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: laravel_test
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo, pdo_mysql, mbstring, bcmath, gd, zip
+          coverage: none
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v3
+        with:
+          path: vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+
+      - name: Install dependencies
+        run: composer install --no-dev --optimize-autoloader
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install NPM & Build assets
+        run: |
+          npm ci
+          npm run build
+
+      - name: Copy .env
+        run: |
+          cp .env.example .env.testing
+          echo "APP_ENV=testing" >> .env.testing
+          echo "DB_HOST=127.0.0.1" >> .env.testing
+          echo "DB_DATABASE=laravel_test" >> .env.testing
+          echo "DB_USERNAME=root" >> .env.testing
+          echo "DB_PASSWORD=root" >> .env.testing
+
+      - name: Generate key
+        run: php artisan key:generate --env=testing
+
+      - name: Run migrations
+        run: php artisan migrate --env=testing --force
+
+      - name: Run tests
+        run: php artisan test --env=testing
+
+  build:
+    name: 🏗️ Build & Push Image
+    runs-on: ubuntu-latest
+    needs: test
+    outputs:
+      image-tag: ${{ steps.meta.outputs.version }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=staging-${{ github.sha }}
+            type=raw,value=staging-latest
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          target: production
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy-staging:
+    name: 🚀 Deploy Staging
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: staging
+      url: ${{ vars.STAGING_APP_URL }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+
+      - name: Add VPS to known hosts
+        run: |
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Copy stack files to VPS
+        run: |
+          scp docker-stack.staging.yml ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:~/stacks/
+
+      - name: Deploy to Swarm
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'ENDSSH'
+            export DOCKER_REGISTRY=ghcr.io/${{ github.repository_owner }}
+            export IMAGE_TAG=${{ github.sha }}
+            export DB_DATABASE=${{ secrets.STAGING_DB_DATABASE }}
+            export DB_USERNAME=${{ secrets.STAGING_DB_USERNAME }}
+            export APP_KEY=${{ secrets.STAGING_APP_KEY }}
+            export STAGING_APP_URL=${{ vars.STAGING_APP_URL }}
+
+            # Login ke registry
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            # Pull image terbaru
+            docker pull ghcr.io/${{ github.repository }}:staging-${{ github.sha }}
+
+            # Deploy stack
+            docker stack deploy \
+              --compose-file ~/stacks/docker-stack.staging.yml \
+              --with-registry-auth \
+              laravel-staging
+
+            # Tunggu service stable
+            sleep 30
+            docker service ls | grep laravel-staging
+          ENDSSH
+
+      - name: Health check staging
+        run: |
+          sleep 15
+          curl --fail --retry 5 --retry-delay 10 ${{ vars.STAGING_APP_URL }}/api/health || exit 1
+
+      - name: Notify success
+        if: success()
+        run: echo "✅ Staging deployment successful!"
+
+      - name: Notify failure
+        if: failure()
+        run: echo "❌ Staging deployment failed!"

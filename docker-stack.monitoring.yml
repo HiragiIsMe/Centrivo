@@ -1,0 +1,94 @@
+version: '3.8'
+
+services:
+  prometheus:
+    image: prom/prometheus:latest
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    volumes:
+      - prometheus_data:/prometheus
+      - /etc/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    networks:
+      - monitoring-network
+
+  grafana:
+    image: grafana/grafana:latest
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_DOMAIN=${MONITORING_DOMAIN}
+      - GF_SMTP_ENABLED=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - /etc/grafana/provisioning:/etc/grafana/provisioning:ro
+    ports:
+      - "3000:3000"
+    networks:
+      - monitoring-network
+    depends_on:
+      - prometheus
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    deploy:
+      mode: global
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    ports:
+      - "8081:8080"
+    networks:
+      - monitoring-network
+    command:
+      - '-housekeeping_interval=10s'
+      - '-docker_only=true'
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    deploy:
+      mode: global
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    ports:
+      - "9100:9100"
+    networks:
+      - monitoring-network
+
+volumes:
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+networks:
+  monitoring-network:
+    driver: overlay
+    attachable: true

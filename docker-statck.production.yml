@@ -1,0 +1,112 @@
+version: '3.8'
+
+services:
+  app:
+    image: ${DOCKER_REGISTRY}/laravel-app:production-${IMAGE_TAG}
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 30s
+        failure_action: rollback
+        order: start-first
+        monitor: 60s
+      rollback_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - APP_KEY=${APP_KEY}
+      - APP_URL=${PRODUCTION_APP_URL}
+      - DB_HOST=mysql
+      - DB_DATABASE=${DB_DATABASE}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - REDIS_HOST=redis
+      - CACHE_DRIVER=redis
+      - SESSION_DRIVER=redis
+      - QUEUE_CONNECTION=redis
+      - RUN_MIGRATIONS=true
+      - LOG_CHANNEL=stderr
+    volumes:
+      - production_storage:/var/www/html/storage
+    networks:
+      - production-network
+      - monitoring-network
+    secrets:
+      - app_key
+      - db_password
+
+  mysql:
+    image: mysql:8.0
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD_FILE: /run/secrets/db_password
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
+    volumes:
+      - production_mysql:/var/lib/mysql
+      - ./docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf
+    networks:
+      - production-network
+    secrets:
+      - db_password
+      - db_root_password
+
+  redis:
+    image: redis:7-alpine
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          memory: 256M
+    command: redis-server --appendonly yes --maxmemory 200mb --maxmemory-policy allkeys-lru
+    volumes:
+      - production_redis:/data
+    networks:
+      - production-network
+
+volumes:
+  production_storage:
+    driver: local
+  production_mysql:
+    driver: local
+  production_redis:
+    driver: local
+
+networks:
+  production-network:
+    driver: overlay
+  monitoring-network:
+    driver: overlay
+    external: true
+
+secrets:
+  app_key:
+    external: true
+  db_password:
+    external: true
+  db_root_password:
+    external: true
