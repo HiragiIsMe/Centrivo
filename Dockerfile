@@ -11,7 +11,9 @@ RUN composer install \
     --ignore-platform-reqs
 
 COPY . .
-RUN composer dump-autoload --optimize
+RUN rm -f bootstrap/cache/*.php
+
+RUN composer dump-autoload --optimize --verbose
 
 
 FROM php:8.3-fpm-alpine AS production
@@ -60,7 +62,6 @@ COPY docker/supervisor/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 WORKDIR /var/www/html
 
 COPY --from=composer-build /app .
-
 
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 775 /var/www/html/storage \
