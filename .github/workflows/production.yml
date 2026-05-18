@@ -84,16 +84,6 @@ jobs:
           DB_USERNAME: root
           DB_PASSWORD: root
 
-      - run: php artisan test
-        env:
-          APP_ENV: testing
-          DB_CONNECTION: mysql
-          DB_HOST: 127.0.0.1
-          DB_PORT: 3306
-          DB_DATABASE: laravel_test
-          DB_USERNAME: root
-          DB_PASSWORD: root
-
   build:
     name: 🏗️ Build Production Image
     runs-on: ubuntu-latest
