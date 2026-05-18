@@ -43,7 +43,7 @@ jobs:
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
 
       - name: Install dependencies
-        run: composer install --no-dev --optimize-autoloader
+        run: composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -66,13 +66,31 @@ jobs:
           echo "DB_PASSWORD=root" >> .env.testing
 
       - name: Generate key
-        run: php artisan key:generate --env=testing
+        run: php artisan key:generate
+        env:
+          APP_ENV: testing
 
       - name: Run migrations
-        run: php artisan migrate --env=testing --force
+        run: php artisan migrate --force
+        env:
+          APP_ENV: testing
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: laravel_test
+          DB_USERNAME: root
+          DB_PASSWORD: root
 
       - name: Run tests
-        run: php artisan test --env=testing
+        run: php artisan test
+        env:
+          APP_ENV: testing
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: laravel_test
+          DB_USERNAME: root
+          DB_PASSWORD: root
 
   build:
     name: 🏗️ Build & Push Image
@@ -162,6 +180,7 @@ jobs:
             docker stack deploy \
               --compose-file ~/stacks/docker-stack.staging.yml \
               --with-registry-auth \
+              --prune \
               laravel-staging
 
             # Tunggu service stable

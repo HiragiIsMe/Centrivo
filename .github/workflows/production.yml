@@ -50,7 +50,7 @@ jobs:
           extensions: pdo, pdo_mysql, mbstring, bcmath, gd, zip
 
       - name: Install dependencies
-        run: composer install --no-dev --optimize-autoloader
+        run: composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 
       - uses: actions/setup-node@v4
         with:
@@ -68,9 +68,29 @@ jobs:
           echo "DB_USERNAME=root" >> .env.testing
           echo "DB_PASSWORD=root" >> .env.testing
 
-      - run: php artisan key:generate --env=testing
-      - run: php artisan migrate --env=testing --force
-      - run: php artisan test --env=testing
+      - run: php artisan key:generate
+        env:
+          APP_ENV: testing
+
+      - run: php artisan migrate --force
+        env:
+          APP_ENV: testing
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: laravel_test
+          DB_USERNAME: root
+          DB_PASSWORD: root
+
+      - run: php artisan test
+        env:
+          APP_ENV: testing
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: laravel_test
+          DB_USERNAME: root
+          DB_PASSWORD: root
 
   build:
     name: 🏗️ Build Production Image
@@ -137,9 +157,11 @@ jobs:
             docker pull ghcr.io/${{ github.repository }}:production-${{ github.sha }}
 
             # Rolling update dengan zero downtime
+            # 👇 EDITED: Menambahkan flag --prune untuk membersihkan sisa service lama yang tidak dipakai
             docker stack deploy \
               --compose-file ~/stacks/docker-stack.production.yml \
               --with-registry-auth \
+              --prune \
               laravel-production
 
             # Monitor rollout
