@@ -94,5 +94,5 @@ secrets:
     external: true
   db_password:
     external: true
-  db_root_password:
+  db_password_root:
     external: true
