@@ -31,7 +31,7 @@ services:
       - DB_HOST=mysql
       - DB_DATABASE=${DB_DATABASE}
       - DB_USERNAME=${DB_USERNAME}
-      - DB_PASSWORD_FILE=/run/secrets/db_password
+      - DB_PASSWORD=/run/secrets/db_password
       - REDIS_HOST=redis
       - CACHE_DRIVER=redis
       - SESSION_DRIVER=redis
