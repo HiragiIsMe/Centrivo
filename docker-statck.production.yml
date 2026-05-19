@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   app:
-    image: ${DOCKER_REGISTRY}/laravel-app:production-${IMAGE_TAG}
+    image: ghcr.io/hiragiisme/centrivo:production-${IMAGE_TAG}
     deploy:
       replicas: 2
       update_config:

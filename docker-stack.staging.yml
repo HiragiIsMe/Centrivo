@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   app:
-    image: ${DOCKER_REGISTRY}/laravel-app:staging-${IMAGE_TAG}
+    image: ghcr.io/hiragiisme/centrivo:staging-${IMAGE_TAG}
     deploy:
       replicas: 1
       update_config:
