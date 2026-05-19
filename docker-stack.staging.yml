@@ -102,6 +102,7 @@ services:
       - SESSION_DRIVER=redis
       - QUEUE_CONNECTION=redis
       - RUN_MIGRATIONS=true
+      - RUN_SEEDERS=true
       - LOG_CHANNEL=stderr
     secrets:
       - app_key

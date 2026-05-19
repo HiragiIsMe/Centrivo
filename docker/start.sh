@@ -53,6 +53,12 @@ if [ "${RUN_MIGRATIONS}" = "true" ]; then
   echo "[3/5] Running migrations..."
   php /var/www/html/artisan migrate --force
   echo "✅ Migrations done!"
+
+  if [ "${RUN_SEEDERS}" = "true" ]; then
+    echo "🌱 Running seeders..."
+    php /var/www/html/artisan db:seed --force
+    echo "✅ Seeders done!"
+  fi
 else
   echo "[3/5] Skipping migrations."
 fi
