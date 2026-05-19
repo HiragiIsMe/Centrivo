@@ -42,9 +42,6 @@ services:
       - staging_storage:/var/www/html/storage
     networks:
       - staging-network
-    secrets:
-      - app_key
-      - db_password
 
   mysql:
     image: mysql:8.0
@@ -65,9 +62,6 @@ services:
       - staging_mysql:/var/lib/mysql
     networks:
       - staging-network
-    secrets:
-      - db_password
-      - db_password_root
 
   redis:
     image: redis:7-alpine
