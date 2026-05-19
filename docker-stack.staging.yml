@@ -26,12 +26,12 @@ services:
     environment:
       - APP_ENV=staging
       - APP_DEBUG=false
-      - APP_KEY_FILE=/run/secrets/app_key
+      - APP_KEY_FILE=${APP_KEY}
       - APP_URL=${STAGING_APP_URL}
       - DB_HOST=mysql
       - DB_DATABASE=${DB_DATABASE}
       - DB_USERNAME=${DB_USERNAME}
-      - DB_PASSWORD=/run/secrets/db_password
+      - DB_PASSWORD=${DB_PASSWORD}
       - REDIS_HOST=redis
       - CACHE_DRIVER=redis
       - SESSION_DRIVER=redis
@@ -59,8 +59,8 @@ services:
     environment:
       MYSQL_DATABASE: ${DB_DATABASE}
       MYSQL_USER: ${DB_USERNAME}
-      MYSQL_PASSWORD_FILE: /run/secrets/db_password
-      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_password_root
+      MYSQL_PASSWORD_FILE: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD_FILE: ${DB_PASSWORD_ROOT}
     volumes:
       - staging_mysql:/var/lib/mysql
     networks:
@@ -88,11 +88,3 @@ volumes:
 networks:
   staging-network:
     driver: overlay
-
-secrets:
-  app_key:
-    external: true
-  db_password:
-    external: true
-  db_password_root:
-    external: true
