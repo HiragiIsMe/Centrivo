@@ -56,8 +56,8 @@ services:
     environment:
       MYSQL_DATABASE: ${DB_DATABASE}
       MYSQL_USER: ${DB_USERNAME}
-      MYSQL_PASSWORD_FILE: ${DB_PASSWORD}
-      MYSQL_ROOT_PASSWORD_FILE: ${DB_PASSWORD_ROOT}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD_ROOT}
     volumes:
       - staging_mysql:/var/lib/mysql
     networks:
