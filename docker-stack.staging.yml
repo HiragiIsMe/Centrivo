@@ -94,6 +94,7 @@ services:
       - DB_PORT=3306
       - DB_DATABASE=${DB_DATABASE}
       - DB_USERNAME=centrivoisme
+      - DB_PASSWORD_FILE=/run/secrets/db_password
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - CACHE_DRIVER=redis
