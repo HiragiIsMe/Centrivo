@@ -29,8 +29,8 @@ services:
       - APP_KEY_FILE=/run/secrets/app_key
       - APP_URL=${STAGING_APP_URL}
       - DB_HOST=mysql
-      - DB_DATABASE=/run/secrets/db_name
-      - DB_USERNAME=/run/secrets/db_username
+      - DB_DATABASE=${DB_DATABASE}
+      - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=/run/secrets/db_password
       - REDIS_HOST=redis
       - CACHE_DRIVER=redis
@@ -57,8 +57,8 @@ services:
         limits:
           memory: 512M
     environment:
-      MYSQL_DATABASE: /run/secrets/db_name
-      MYSQL_USER: /run/secrets/db_username
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
       MYSQL_PASSWORD_FILE: /run/secrets/db_password
       MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_password_root
     volumes:
