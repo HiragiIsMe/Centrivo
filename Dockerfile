@@ -27,7 +27,7 @@ RUN apk add --no-cache \
     supervisor \
     curl \
     redis \
-     mysql-client
+    mysql-client \
     && rm -rf /var/cache/apk/*
 
 RUN install-php-extensions \
