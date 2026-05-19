@@ -67,7 +67,7 @@ services:
       - staging-network
     secrets:
       - db_password
-      - db_root_password
+      - db_password_root
 
   redis:
     image: redis:7-alpine
