@@ -63,9 +63,9 @@ php /var/www/html/artisan route:cache
 php /var/www/html/artisan view:cache
 echo "✅ Optimization done!"
 
-RUN mkdir -p /var/log/supervisor \
-    && mkdir -p /var/log/nginx \
-    && mkdir -p /var/log/php
+mkdir -p /var/log/supervisor
+mkdir -p /var/log/nginx
+mkdir -p /var/log/php
 
 echo "[5/5] Starting Nginx + PHP-FPM via Supervisor..."
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
