@@ -60,7 +60,7 @@ services:
       MYSQL_DATABASE: /run/secrets/db_name
       MYSQL_USER: /run/secrets/db_username
       MYSQL_PASSWORD_FILE: /run/secrets/db_password
-      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_password_password
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_password_root
     volumes:
       - staging_mysql:/var/lib/mysql
     networks:
