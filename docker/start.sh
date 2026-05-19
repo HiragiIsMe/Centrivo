@@ -5,6 +5,16 @@ echo "========================================"
 echo "  Centrivo - Starting up..."
 echo "========================================"
 
+if [ -f /run/secrets/app_key ]; then
+  export APP_KEY=$(cat /run/secrets/app_key)
+  echo "✅ APP_KEY loaded from secret"
+fi
+
+if [ -f /run/secrets/db_password ]; then
+  export DB_PASSWORD=$(cat /run/secrets/db_password)
+  echo "✅ DB_PASSWORD loaded from secret"
+fi
+
 echo "[1/5] Waiting for MySQL at ${DB_HOST}:3306..."
 MAX_TRIES=40
 COUNT=0

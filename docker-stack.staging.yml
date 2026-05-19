@@ -1,5 +1,13 @@
 version: '3.8'
 
+secrets:
+  app_key:
+    external: true
+  db_password:
+    external: true
+  db_password_root:
+    external: true
+
 services:
 
   mysql:
@@ -19,18 +27,21 @@ services:
     environment:
       MYSQL_DATABASE: ${DB_DATABASE}
       MYSQL_USER: ${DB_USERNAME}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD_ROOT}
+      MYSQL_PASSWORD_FILE: /run/secrets/db_password
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_password_root
+    secrets:
+      - db_password
+      - db_password_root
     volumes:
       - staging_mysql:/var/lib/mysql
     networks:
       - staging-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD_ROOT}"]
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p$$(cat /run/secrets/db_password_root) --silent"]
       interval: 10s
       timeout: 5s
-      retries: 10
-      start_period: 40s
+      retries: 15
+      start_period: 60s
 
   redis:
     image: redis:7-alpine
@@ -65,10 +76,10 @@ services:
         parallelism: 1
         delay: 10s
         failure_action: rollback
-        order: stop-first        
+        order: stop-first
       restart_policy:
         condition: on-failure
-        delay: 10s
+        delay: 15s
         max_attempts: 3
       resources:
         limits:
@@ -77,14 +88,12 @@ services:
     environment:
       - APP_ENV=staging
       - APP_DEBUG=false
-      - APP_KEY=${APP_KEY}
       - APP_URL=${STAGING_APP_URL}
       - DB_CONNECTION=mysql
       - DB_HOST=mysql
       - DB_PORT=3306
       - DB_DATABASE=${DB_DATABASE}
       - DB_USERNAME=${DB_USERNAME}
-      - DB_PASSWORD=${DB_PASSWORD}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - CACHE_DRIVER=redis
@@ -92,6 +101,9 @@ services:
       - QUEUE_CONNECTION=redis
       - RUN_MIGRATIONS=true
       - LOG_CHANNEL=stderr
+    secrets:
+      - app_key
+      - db_password
     volumes:
       - staging_storage:/var/www/html/storage
     networks:
