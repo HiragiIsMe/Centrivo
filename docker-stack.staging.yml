@@ -1,6 +1,57 @@
 version: '3.8'
 
 services:
+
+  mysql:
+    image: mysql:8.0
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 5
+      resources:
+        limits:
+          memory: 512M
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD_ROOT}
+    volumes:
+      - staging_mysql:/var/lib/mysql
+    networks:
+      - staging-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD_ROOT}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 40s
+
+  redis:
+    image: redis:7-alpine
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      resources:
+        limits:
+          memory: 128M
+    networks:
+      - staging-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
   app:
     image: ghcr.io/hiragiisme/centrivo:staging-${IMAGE_TAG}
     ports:
@@ -14,10 +65,10 @@ services:
         parallelism: 1
         delay: 10s
         failure_action: rollback
-        order: start-first
+        order: stop-first        
       restart_policy:
         condition: on-failure
-        delay: 5s
+        delay: 10s
         max_attempts: 3
       resources:
         limits:
@@ -26,13 +77,16 @@ services:
     environment:
       - APP_ENV=staging
       - APP_DEBUG=false
-      - APP_KEY_FILE=${APP_KEY}
+      - APP_KEY=${APP_KEY}
       - APP_URL=${STAGING_APP_URL}
+      - DB_CONNECTION=mysql
       - DB_HOST=mysql
+      - DB_PORT=3306
       - DB_DATABASE=${DB_DATABASE}
       - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}
       - REDIS_HOST=redis
+      - REDIS_PORT=6379
       - CACHE_DRIVER=redis
       - SESSION_DRIVER=redis
       - QUEUE_CONNECTION=redis
@@ -40,36 +94,6 @@ services:
       - LOG_CHANNEL=stderr
     volumes:
       - staging_storage:/var/www/html/storage
-    networks:
-      - staging-network
-
-  mysql:
-    image: mysql:8.0
-    deploy:
-      replicas: 1
-      placement:
-        constraints:
-          - node.role == manager
-      resources:
-        limits:
-          memory: 512M
-    environment:
-      MYSQL_DATABASE: ${DB_DATABASE}
-      MYSQL_USER: ${DB_USERNAME}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD_ROOT}
-    volumes:
-      - staging_mysql:/var/lib/mysql
-    networks:
-      - staging-network
-
-  redis:
-    image: redis:7-alpine
-    deploy:
-      replicas: 1
-      resources:
-        limits:
-          memory: 128M
     networks:
       - staging-network
 

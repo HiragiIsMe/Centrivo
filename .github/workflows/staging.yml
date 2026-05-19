@@ -11,6 +11,7 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+
   test:
     name: 🧪 Run Tests
     runs-on: ubuntu-latest
@@ -135,44 +136,84 @@ jobs:
         run: |
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Copy stack files to VPS
+      - name: Copy stack file to VPS
         run: |
+          ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "mkdir -p ~/stacks"
           scp docker-stack.staging.yml ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:~/stacks/
 
       - name: Deploy to Swarm
-        env:
-          IMAGE_TAG: ${{ github.sha }}
         run: |
-          ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'ENDSSH'
-            export DOCKER_REGISTRY=ghcr.io/${{ github.repository_owner }}
-            export IMAGE_TAG=${{ github.sha }}
-            export DB_DATABASE=${{ secrets.STAGING_DB_DATABASE }}
-            export DB_USERNAME=${{ secrets.STAGING_DB_USERNAME }}
-            export APP_KEY=${{ secrets.STAGING_APP_KEY }}
-            export STAGING_APP_URL=${{ vars.STAGING_APP_URL }}
+          ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} bash << 'ENDSSH'
+            set -e
 
-            # Login ke registry
-            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            # ── Export semua env vars yang dibutuhkan stack ──
+            export IMAGE_TAG="${{ github.sha }}"
+            export APP_KEY="${{ secrets.STAGING_APP_KEY }}"
+            export STAGING_APP_URL="${{ vars.STAGING_APP_URL }}"
+            export DB_DATABASE="${{ secrets.STAGING_DB_DATABASE }}"
+            export DB_USERNAME="${{ secrets.STAGING_DB_USERNAME }}"
+            export DB_PASSWORD="${{ secrets.STAGING_DB_PASSWORD }}"
+            export DB_PASSWORD_ROOT="${{ secrets.STAGING_DB_PASSWORD_ROOT }}"
 
-            # Pull image terbaru
+            # ── Login ke GitHub Container Registry ──
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+            # ── Pull image terbaru ──
+            echo "📦 Pulling image..."
             docker pull ghcr.io/${{ github.repository }}:staging-${{ github.sha }}
 
-            # Deploy stack
+            # ── Deploy stack ──
+            echo "🚀 Deploying stack..."
             docker stack deploy \
               --compose-file ~/stacks/docker-stack.staging.yml \
               --with-registry-auth \
               --prune \
               laravel-staging
 
-            # Tunggu service stable
-            sleep 30
+            # ── Tunggu service app converge (max 3 menit) ──
+            echo "⏳ Waiting for services to converge..."
+            TIMEOUT=180
+            ELAPSED=0
+
+            while true; do
+              REPLICAS=$(docker service ls --filter name=laravel-staging_app --format "{{.Replicas}}")
+              echo "   laravel-staging_app replicas: $REPLICAS"
+
+              # Format replicas: "1/1" berarti ready
+              if echo "$REPLICAS" | grep -qE "^[0-9]+/[0-9]+$"; then
+                READY=$(echo "$REPLICAS" | cut -d'/' -f1)
+                DESIRED=$(echo "$REPLICAS" | cut -d'/' -f2)
+                if [ "$READY" = "$DESIRED" ] && [ "$DESIRED" != "0" ]; then
+                  echo "✅ Service converged!"
+                  break
+                fi
+              fi
+
+              if [ "$ELAPSED" -ge "$TIMEOUT" ]; then
+                echo "❌ Timeout waiting for service to converge."
+                docker service ps laravel-staging_app --no-trunc
+                exit 1
+              fi
+
+              sleep 5
+              ELAPSED=$((ELAPSED + 5))
+            done
+
+            # ── Status akhir ──
+            echo ""
+            echo "📊 Final service status:"
             docker service ls | grep laravel-staging
           ENDSSH
 
       - name: Health check staging
         run: |
-          sleep 15
-          curl --fail --retry 5 --retry-delay 10 ${{ vars.STAGING_APP_URL }}/api/health || exit 1
+          echo "🔍 Running health check..."
+          curl --fail \
+               --retry 10 \
+               --retry-delay 10 \
+               --retry-connrefused \
+               --max-time 10 \
+               ${{ vars.STAGING_APP_URL }}/api/health || exit 1
 
       - name: Notify success
         if: success()
@@ -180,4 +221,7 @@ jobs:
 
       - name: Notify failure
         if: failure()
-        run: echo "❌ Staging deployment failed!"
+        run: |
+          echo "❌ Staging deployment failed!"
+          echo "Check service logs with:"
+          echo "  docker service logs laravel-staging_app --tail 50"
