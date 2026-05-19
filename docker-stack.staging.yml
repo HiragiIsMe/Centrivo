@@ -3,6 +3,11 @@ version: '3.8'
 services:
   app:
     image: ghcr.io/hiragiisme/centrivo:staging-${IMAGE_TAG}
+    ports:
+      - target: 80
+        published: 80
+        protocol: tcp
+        mode: ingress
     deploy:
       replicas: 1
       update_config:
@@ -21,12 +26,12 @@ services:
     environment:
       - APP_ENV=staging
       - APP_DEBUG=false
-      - APP_KEY=${APP_KEY}
+      - APP_KEY_FILE=/run/secrets/app_key
       - APP_URL=${STAGING_APP_URL}
       - DB_HOST=mysql
       - DB_DATABASE=${DB_DATABASE}
       - DB_USERNAME=${DB_USERNAME}
-      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_PASSWORD_FILE=/run/secrets/db_password
       - REDIS_HOST=redis
       - CACHE_DRIVER=redis
       - SESSION_DRIVER=redis

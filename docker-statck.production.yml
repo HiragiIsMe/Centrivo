@@ -3,6 +3,11 @@ version: '3.8'
 services:
   app:
     image: ghcr.io/hiragiisme/centrivo:production-${IMAGE_TAG}
+    ports:
+      - target: 80
+        published: 80
+        protocol: tcp
+        mode: ingress
     deploy:
       replicas: 2
       update_config:
