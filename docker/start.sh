@@ -24,7 +24,7 @@ echo "[1/5] Waiting for MySQL at ${DB_HOST}:3306..."
 MAX_TRIES=60
 COUNT=0
 
-until mysqladmin ping -h "${DB_HOST}" -u root -p"${DB_ROOT_PASSWORD}" --silent 2>/dev/null; do
+until mysqladmin ping -h "${DB_HOST}" -u "${DB_USERNAME}" -p"${DB_PASSWORD}" --silent 2>/dev/null; do
   COUNT=$((COUNT + 1))
   if [ "$COUNT" -ge "$MAX_TRIES" ]; then
     echo "❌ ERROR: MySQL not ready after $MAX_TRIES attempts. Exiting."
