@@ -87,11 +87,13 @@ class AdvertisementController extends Controller
             ],
         ];
 
-        $snapToken = Snap::getSnapToken($params);
-
-        $adTx->update(['snap_token' => $snapToken]);
-
-        return redirect()->route('seller.advertisements.pay', $adTx->id);
+        try {
+            $snapToken = Snap::getSnapToken($params);
+            $adTx->update(['snap_token' => $snapToken]);
+            return redirect()->route('seller.advertisements.pay', $adTx->id);
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat memproses pembayaran iklan: ' . $e->getMessage());
+        }
     }
 
     public function pay(AdvertisementTransaction $advertisementTransaction)
