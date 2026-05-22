@@ -8,7 +8,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: hiragiisme/centrivo
 
 jobs:
 
@@ -159,13 +159,13 @@ jobs:
 
             # Export deployment variables
             export IMAGE_TAG="${{ github.sha }}"
-            export GITHUB_REPOSITORY_OWNER="${{ github.repository_owner }}"
+            export GITHUB_REPOSITORY_OWNER="hiragiisme"
             
             # Login to GitHub Container Registry
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
             echo "📦 Pulling image..."
-            docker pull ghcr.io/${{ github.repository }}:staging-${{ github.sha }}
+            docker pull ghcr.io/${{ env.IMAGE_NAME }}:staging-${{ github.sha }}
 
             echo "🚀 Deploying stack..."
             cd ~/stacks

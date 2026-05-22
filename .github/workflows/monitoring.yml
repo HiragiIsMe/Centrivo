@@ -1,0 +1,57 @@
+name: 📊 Deploy Monitoring
+
+on:
+  workflow_dispatch:
+    inputs:
+      grafana_password:
+        description: 'Password for Grafana Admin'
+        required: true
+        default: 'PasswordAman123!'
+
+jobs:
+  deploy-monitoring:
+    name: 🚀 Deploy Monitoring Stack
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+
+      - name: Add VPS to known hosts
+        run: ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Upload Monitoring Files
+        run: |
+          ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "mkdir -p ~/stacks"
+          
+          # Upload the swarm config
+          scp docker/swarm/monitoring.yml ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:~/stacks/monitoring.yml
+          
+          # Upload the monitoring directory containing prometheus and grafana configs
+          scp -r monitoring ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:~/stacks/
+
+      - name: Deploy Monitoring to Swarm
+        run: |
+          ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} bash << 'ENDSSH'
+            set -e
+            
+            cd ~/stacks
+            
+            export GRAFANA_USER="admin"
+            export GRAFANA_PASSWORD="${{ github.event.inputs.grafana_password }}"
+            export VPS_IP_ADDRESS="${{ secrets.VPS_HOST }}"
+            
+            echo "🚀 Deploying monitoring stack..."
+            docker stack deploy \
+              --compose-file monitoring.yml \
+              --prune \
+              laravel-monitoring
+
+            echo "✅ Monitoring deployed successfully!"
+            echo "Akses Grafana di: http://${{ secrets.VPS_HOST }}:3000"
+          ENDSSH
