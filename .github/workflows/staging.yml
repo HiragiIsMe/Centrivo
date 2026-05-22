@@ -158,6 +158,9 @@ jobs:
           echo "DB_HOST=mysql" >> staging.env
           echo "REDIS_HOST=redis" >> staging.env
           
+          # Strip Windows carriage returns (\r)
+          sed -i 's/\r$//' staging.env
+          
           # 2. Upload Files to VPS
           ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "mkdir -p ~/stacks"
           scp docker/swarm/staging.yml ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:~/stacks/staging.yml
@@ -179,6 +182,7 @@ jobs:
 
             echo "🚀 Deploying stack..."
             cd ~/stacks
+            sed -i 's/\r$//' staging.env
             export $(grep -v '^#' staging.env | xargs) || true
             docker stack deploy \
               --compose-file staging.yml \

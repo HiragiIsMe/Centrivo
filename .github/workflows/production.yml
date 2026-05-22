@@ -147,6 +147,9 @@ jobs:
           echo "DB_HOST=mysql" >> production.env
           echo "REDIS_HOST=redis" >> production.env
           
+          # Strip Windows carriage returns (\r)
+          sed -i 's/\r$//' production.env
+          
           # 2. Upload Files to VPS
           ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "mkdir -p ~/stacks"
           scp docker/swarm/production.yml ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:~/stacks/production.yml
