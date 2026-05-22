@@ -121,7 +121,6 @@ jobs:
     needs: build
     environment:
       name: staging
-      url: http://${{ secrets.VPS_HOST }}:8080
 
     steps:
       - name: Checkout code

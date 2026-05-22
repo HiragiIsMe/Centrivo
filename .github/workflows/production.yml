@@ -113,7 +113,6 @@ jobs:
     needs: build
     environment:
       name: production
-      url: http://${{ secrets.VPS_HOST }}
 
     steps:
       - uses: actions/checkout@v4
