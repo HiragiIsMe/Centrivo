@@ -113,7 +113,7 @@ jobs:
     needs: build
     environment:
       name: production
-      url: ${{ vars.PRODUCTION_APP_URL }}
+      url: http://${{ secrets.VPS_HOST }}
 
     steps:
       - uses: actions/checkout@v4
@@ -125,44 +125,45 @@ jobs:
       - name: Add VPS to known hosts
         run: ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Copy production stack
-        run: scp docker-stack.production.yml ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:~/stacks/
-
-      - name: Deploy to Production Swarm
+      - name: Generate Env and Deploy
         run: |
-          ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'ENDSSH'
-            export DOCKER_REGISTRY=ghcr.io/${{ github.repository_owner }}
-            export IMAGE_TAG=${{ github.sha }}
-            export DB_DATABASE=${{ secrets.PRODUCTION_DB_DATABASE }}
-            export DB_USERNAME=${{ secrets.PRODUCTION_DB_USERNAME }}
-            export APP_KEY=${{ secrets.PRODUCTION_APP_KEY }}
-            export PRODUCTION_APP_URL=${{ vars.PRODUCTION_APP_URL }}
+          # 1. Create Production Environment File
+          cat << 'EOF' > production.env
+          ${{ secrets.ENV_FILE_PRODUCTION }}
+          EOF
+          
+          # Force swarm overrides
+          echo "" >> production.env
+          echo "DB_HOST=mysql" >> production.env
+          echo "REDIS_HOST=redis" >> production.env
+          
+          # 2. Upload Files to VPS
+          ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "mkdir -p ~/stacks"
+          scp docker/swarm/production.yml ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:~/stacks/production.yml
+          scp production.env ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:~/stacks/production.env
 
-            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          # 3. Deploy Stack via SSH
+          ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} bash << 'ENDSSH'
+            set -e
 
+            # Export deployment variables
+            export IMAGE_TAG="${{ github.sha }}"
+            export GITHUB_REPOSITORY_OWNER="${{ github.repository_owner }}"
+            
+            # Login to GitHub Container Registry
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+            echo "📦 Pulling image..."
             docker pull ghcr.io/${{ github.repository }}:production-${{ github.sha }}
 
-            # Rolling update dengan zero downtime
-            # 👇 EDITED: Menambahkan flag --prune untuk membersihkan sisa service lama yang tidak dipakai
+            echo "🚀 Deploying stack..."
+            cd ~/stacks
+            export $(grep -v '^#' production.env | xargs) || true
             docker stack deploy \
-              --compose-file ~/stacks/docker-stack.production.yml \
+              --compose-file production.yml \
               --with-registry-auth \
               --prune \
               laravel-production
 
-            # Monitor rollout
-            echo "⏳ Waiting for rollout..."
-            sleep 60
-            docker service ls | grep laravel-production
+            echo "✅ Deploy command sent!"
           ENDSSH
-
-      - name: Health check production
-        run: |
-          sleep 30
-          curl --fail --retry 10 --retry-delay 10 ${{ vars.PRODUCTION_APP_URL }}/api/health || exit 1
-
-      - name: Rollback on failure
-        if: failure()
-        run: |
-          ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-            "docker service rollback laravel-production_app"

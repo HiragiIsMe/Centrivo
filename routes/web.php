@@ -44,7 +44,6 @@ Route::get('/', [AuthController::class, 'index'])->name('landing')->middleware('
 
 Route::get('/login', [AuthController::class, 'login'])->name('login')->middleware('guest');
 
-// Halaman publik banned notice (tidak perlu login)
 Route::get('/banned/{reportCode?}', [BannedController::class, 'show'])->name('banned.notice');
 
 Route::post('/login', [AuthController::class, 'authenticate'])->name('login.post');
@@ -105,16 +104,13 @@ Route::middleware(['auth', 'admin'])->group(function(){
 
     Route::get('/service-transactions', [ServiceTransactionController::class, 'index'])->name('admin.service.transactions');
 
-    // Advertisement Management
     Route::get('/advertisements', [AdminAdController::class, 'index'])->name('admin.ads.index');
     Route::post('/advertisements/packages', [AdminAdController::class, 'storePackage'])->name('admin.ads.store');
     Route::post('/advertisements/packages/{adPackage}/toggle', [AdminAdController::class, 'togglePackage'])->name('admin.ads.toggle');
     Route::delete('/advertisements/packages/{adPackage}', [AdminAdController::class, 'destroyPackage'])->name('admin.ads.destroy');
 
-    // Platform Reports
     Route::get('/admin/reports/export', [AdminReportController::class, 'exportExcel'])->name('admin.reports.export');
 
-    // Platform Settings & Billboards
     Route::get('/admin/settings', [AdminSettingsController::class, 'index'])->name('admin.settings.index');
     Route::post('/admin/settings/update', [AdminSettingsController::class, 'updateSettings'])->name('admin.settings.update');
     Route::post('/admin/billboards', [AdminSettingsController::class, 'storeBillboard'])->name('admin.billboards.store');
@@ -136,7 +132,6 @@ Route::middleware(['auth', 'sellers'])->group(function(){
     Route::get('/wallet-sellers', [WalletController::class, 'index'])->name('seller.wallet');
     Route::post('/wallet-sellers/withdraw', [WalletController::class, 'withdraw'])->name('seller.wallet.withdraw');
 
-    // Service routes — index/show accessible to all sellers, mutations require verification
     Route::get('services', [ServiceController::class, 'index'])->name('services.index');
     Route::get('services/{service}', [ServiceController::class, 'show'])->name('services.show');
     Route::middleware('seller_verified')->group(function () {
@@ -151,20 +146,16 @@ Route::middleware(['auth', 'sellers'])->group(function(){
 
     Route::resource('locations', LocationController::class);
 
-    // KYC Verification
     Route::get('/verify-identity', [\App\Http\Controllers\Sellers\KycController::class, 'show'])->name('seller.kyc.show');
     Route::post('/verify-identity', [\App\Http\Controllers\Sellers\KycController::class, 'submit'])->name('seller.kyc.submit');
 
-    // Advertisements
     Route::get('/advertisements-sellers', [SellerAdController::class, 'index'])->name('seller.advertisements');
     Route::post('/advertisements-sellers/checkout', [SellerAdController::class, 'checkout'])->name('seller.advertisements.checkout');
     Route::get('/advertisements-sellers/pay/{advertisementTransaction}', [SellerAdController::class, 'pay'])->name('seller.advertisements.pay');
 
-    // Income Reports
     Route::get('/reports-sellers', [SellerReportController::class, 'index'])->name('seller.reports.index');
     Route::get('/reports-sellers/export', [SellerReportController::class, 'exportExcel'])->name('seller.reports.export');
 
-    // Report User
     Route::post('/seller/report-user', [\App\Http\Controllers\Sellers\TransactionController::class, 'reportUser'])->name('seller.report.user');
 });
 
@@ -196,6 +187,5 @@ Route::middleware(['auth', 'users'])->group(function(){
 
 
 
-// Webhook
 Route::post('/webhook/midtrans', [WebhookController::class, 'midtransCallback'])->name('webhook.midtrans');
 

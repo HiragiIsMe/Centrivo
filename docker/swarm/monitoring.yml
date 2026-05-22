@@ -12,14 +12,11 @@ services:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
       - '--storage.tsdb.retention.time=15d'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
       - '--web.enable-lifecycle'
     volumes:
       - prometheus_data:/prometheus
-      - /etc/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-    ports:
-      - "9090:9090"
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    # TIDAK ADA PORTS! Sengaja disembunyikan dari internet demi keamanan.
     networks:
       - monitoring-network
 
@@ -32,15 +29,14 @@ services:
           - node.role == manager
     environment:
       - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-AdminAman123!}
       - GF_USERS_ALLOW_SIGN_UP=false
-      - GF_SERVER_DOMAIN=${MONITORING_DOMAIN}
-      - GF_SMTP_ENABLED=false
+      - GF_SERVER_DOMAIN=${VPS_IP_ADDRESS:-localhost}
     volumes:
       - grafana_data:/var/lib/grafana
-      - /etc/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
     ports:
-      - "3000:3000"
+      - "3000:3000" # Hanya Grafana yang terekspos karena memiliki fitur login
     networks:
       - monitoring-network
     depends_on:
@@ -56,8 +52,7 @@ services:
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
       - /dev/disk/:/dev/disk:ro
-    ports:
-      - "8081:8080"
+    # TIDAK ADA PORTS! Disembunyikan agar metric Docker Anda tidak bocor.
     networks:
       - monitoring-network
     command:
@@ -77,8 +72,7 @@ services:
       - '--path.rootfs=/rootfs'
       - '--path.sysfs=/host/sys'
       - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
-    ports:
-      - "9100:9100"
+    # TIDAK ADA PORTS! Disembunyikan agar detail spesifikasi Server/VPS Anda tidak bocor.
     networks:
       - monitoring-network
 

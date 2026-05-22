@@ -1,0 +1,91 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    command: --default-authentication-plugin=mysql_native_password
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-centrivo}
+      MYSQL_USER: ${DB_USERNAME:-centrivoisme}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    env_file:
+      - ./production.env
+    volumes:
+      - production_mysql:/var/lib/mysql
+    networks:
+      - production-network
+
+  redis:
+    image: redis:7-alpine
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          memory: 256M
+    command: redis-server --appendonly yes --maxmemory 200mb --maxmemory-policy allkeys-lru
+    volumes:
+      - production_redis:/data
+    networks:
+      - production-network
+
+  app:
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER:-hiragiisme}/centrivo:production-${IMAGE_TAG:-latest}
+    ports:
+      - target: 80
+        published: 80
+        protocol: tcp
+        mode: ingress
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 30s
+        failure_action: rollback
+        order: start-first
+      rollback_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+    env_file:
+      - ./production.env
+    volumes:
+      - production_storage:/var/www/html/storage
+    networks:
+      - production-network
+      - monitoring-network
+
+volumes:
+  production_storage:
+    driver: local
+  production_mysql:
+    driver: local
+  production_redis:
+    driver: local
+
+networks:
+  production-network:
+    driver: overlay
+  monitoring-network:
+    driver: overlay
+    external: true

@@ -8,7 +8,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: hiragiisme/centrivo
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
 
@@ -121,7 +121,7 @@ jobs:
     needs: build
     environment:
       name: staging
-      url: ${{ vars.STAGING_APP_URL }}
+      url: http://${{ secrets.VPS_HOST }}:8080
 
     steps:
       - name: Checkout code
@@ -136,60 +136,45 @@ jobs:
         run: |
           ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
 
-      - name: Copy stack file to VPS
+      - name: Generate Env and Deploy
         run: |
+          # 1. Create Staging Environment File
+          cat << 'EOF' > staging.env
+          ${{ secrets.ENV_FILE_STAGING }}
+          EOF
+          
+          # Force swarm overrides
+          echo "" >> staging.env
+          echo "DB_HOST=mysql" >> staging.env
+          echo "REDIS_HOST=redis" >> staging.env
+          
+          # 2. Upload Files to VPS
           ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "mkdir -p ~/stacks"
-          scp docker-stack.staging.yml ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:~/stacks/
+          scp docker/swarm/staging.yml ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:~/stacks/staging.yml
+          scp staging.env ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:~/stacks/staging.env
 
-      - name: Deploy to Swarm
-        run: |
+          # 3. Deploy Stack via SSH
           ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} bash << 'ENDSSH'
             set -e
 
+            # Export deployment variables
             export IMAGE_TAG="${{ github.sha }}"
-            export STAGING_APP_URL="${{ vars.STAGING_APP_URL }}"
-            export DB_DATABASE="centrivo"
-
+            export GITHUB_REPOSITORY_OWNER="${{ github.repository_owner }}"
+            
+            # Login to GitHub Container Registry
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
             echo "📦 Pulling image..."
-            docker pull ghcr.io/hiragiisme/centrivo:staging-${{ github.sha }}
+            docker pull ghcr.io/${{ github.repository }}:staging-${{ github.sha }}
 
             echo "🚀 Deploying stack..."
+            cd ~/stacks
+            export $(grep -v '^#' staging.env | xargs) || true
             docker stack deploy \
-              --compose-file ~/stacks/docker-stack.staging.yml \
+              --compose-file staging.yml \
               --with-registry-auth \
               --prune \
               laravel-staging
 
-            echo "⏳ Waiting for services to converge..."
-            TIMEOUT=180
-            ELAPSED=0
-
-            while true; do
-              REPLICAS=$(docker service ls --filter name=laravel-staging_app --format "{{.Replicas}}")
-              echo "   laravel-staging_app replicas: $REPLICAS"
-
-              if echo "$REPLICAS" | grep -qE "^[0-9]+/[0-9]+$"; then
-                READY=$(echo "$REPLICAS" | cut -d'/' -f1)
-                DESIRED=$(echo "$REPLICAS" | cut -d'/' -f2)
-                if [ "$READY" = "$DESIRED" ] && [ "$DESIRED" != "0" ]; then
-                  echo "✅ Service converged!"
-                  break
-                fi
-              fi
-
-              if [ "$ELAPSED" -ge "$TIMEOUT" ]; then
-                echo "❌ Timeout waiting for service to converge."
-                docker service ps laravel-staging_app --no-trunc
-                exit 1
-              fi
-
-              sleep 5
-              ELAPSED=$((ELAPSED + 5))
-            done
-
-            echo ""
-            echo "📊 Final service status:"
-            docker service ls | grep laravel-staging
+            echo "✅ Deploy command sent!"
           ENDSSH
