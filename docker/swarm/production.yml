@@ -90,5 +90,5 @@ networks:
   production-network:
     driver: overlay
   monitoring-network:
-    driver: overlay
+    name: monitoring-network
     external: true
