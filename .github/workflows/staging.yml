@@ -44,7 +44,7 @@ jobs:
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
 
       - name: Install dependencies
-        run: composer install --no-dev --optimize-autoloader --ignore-platform-reqs
+        run: composer install --optimize-autoloader --ignore-platform-reqs
         env:
           DB_CONNECTION: sqlite
           DB_DATABASE: ":memory:"
@@ -65,6 +65,17 @@ jobs:
 
       - name: Run migrations
         run: php artisan migrate --force
+        env:
+          APP_ENV: testing
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: laravel_test
+          DB_USERNAME: root
+          DB_PASSWORD: root
+
+      - name: Run unit tests
+        run: php artisan test
         env:
           APP_ENV: testing
           DB_CONNECTION: mysql

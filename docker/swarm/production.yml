@@ -16,9 +16,9 @@ services:
           memory: 512M
     environment:
       MYSQL_DATABASE: ${DB_DATABASE:-centrivo}
-      MYSQL_USER: ${DB_USERNAME:-centrivoisme}
+      MYSQL_USER: ${MYSQL_USER:-centrivoisme}
       MYSQL_PASSWORD: ${DB_PASSWORD}
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-${DB_PASSWORD}}
     env_file:
       - ./production.env
     volumes:
