@@ -171,7 +171,12 @@ jobs:
 
             echo "🚀 Deploying stack..."
             cd ~/stacks
+            sed -i 's/\r$//' production.env
             export $(grep -v '^#' production.env | xargs) || true
+
+            # Ensure the external overlay network exists
+            docker network inspect monitoring-network >/dev/null 2>&1 || docker network create --driver overlay --attachable monitoring-network
+
             docker stack deploy \
               --compose-file production.yml \
               --with-registry-auth \

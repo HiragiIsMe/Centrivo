@@ -71,7 +71,7 @@ services:
       - ./production.env
     environment:
       RUN_MIGRATIONS: ${RUN_MIGRATIONS:-true}
-      RUN_SEEDERS: ${RUN_SEEDERS:-false}
+      RUN_SEEDERS: ${RUN_SEEDERS:-true}
     volumes:
       - production_storage:/var/www/html/storage
     networks:
