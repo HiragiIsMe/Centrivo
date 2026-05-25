@@ -114,7 +114,7 @@ Route::middleware(['auth', 'admin'])->group(function(){
     Route::get('/admin/settings', [AdminSettingsController::class, 'index'])->name('admin.settings.index');
     Route::post('/admin/settings/update', [AdminSettingsController::class, 'updateSettings'])->name('admin.settings.update');
     Route::post('/admin/billboards', [AdminSettingsController::class, 'storeBillboard'])->name('admin.billboards.store');
-    Route::post('/admin/billboards/{billboard}', [AdminSettingsController::class, 'updateBillboard'])->name('admin.billboards.update');
+    Route::put('/admin/billboards/{billboard}', [AdminSettingsController::class, 'updateBillboard'])->name('admin.billboards.update');
     Route::delete('/admin/billboards/{billboard}', [AdminSettingsController::class, 'destroyBillboard'])->name('admin.billboards.destroy');
     Route::post('/admin/billboards/{billboard}/toggle', [AdminSettingsController::class, 'toggleBillboard'])->name('admin.billboards.toggle');
     Route::get('/admin/seller-verifications', [\App\Http\Controllers\Admin\SellerVerificationController::class, 'index'])->name('admin.seller-verifications.index');

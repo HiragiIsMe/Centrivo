@@ -504,7 +504,7 @@ class AdminTest extends TestCase
         $this->assertFalse((bool)$billboard->is_active);
 
         // 3. Update
-        $response = $this->actingAs($this->admin)->post(route('admin.billboards.update', $billboard), [
+        $response = $this->actingAs($this->admin)->put(route('admin.billboards.update', $billboard), [
             'title' => 'Mega Sale',
             'gradient_from' => '#00ff00',
             'gradient_to' => '#0000ff',

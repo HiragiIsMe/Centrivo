@@ -120,14 +120,55 @@
                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Sub-judul (Opsional)</label>
                     <input type="text" name="subtitle" class="w-full bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm font-bold outline-none focus:ring-2 focus:ring-color1/20">
                 </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Warna Gradient Dari</label>
-                    <input type="color" name="gradient_from" value="#628ECB" class="w-full h-12 bg-slate-50 border border-slate-100 rounded-xl p-1 outline-none">
+
+                <!-- Gradient From with Opacity -->
+                <div class="col-span-2">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Warna Gradient Awal</label>
+                    <div class="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-xl p-3">
+                        <input type="color" id="addFromColor" value="#628ECB"
+                               class="w-10 h-10 rounded-lg border-0 cursor-pointer bg-transparent flex-shrink-0"
+                               oninput="updateGradientValue('add', 'from')">
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-[10px] font-bold text-slate-400">Opacity</span>
+                                <span id="addFromOpacityLabel" class="text-[10px] font-black text-slate-700">100%</span>
+                            </div>
+                            <input type="range" id="addFromOpacity" min="0" max="100" value="100"
+                                   class="w-full h-1.5 rounded-full accent-color1 cursor-pointer"
+                                   oninput="updateGradientValue('add', 'from')">
+                        </div>
+                        <div id="addFromPreview" class="w-8 h-8 rounded-lg border border-slate-200 flex-shrink-0" style="background-color: #628ECB"></div>
+                    </div>
+                    <input type="hidden" id="addFromHidden" name="gradient_from" value="#628ECB">
                 </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Warna Gradient Ke</label>
-                    <input type="color" name="gradient_to" value="#8AAEE0" class="w-full h-12 bg-slate-50 border border-slate-100 rounded-xl p-1 outline-none">
+
+                <!-- Gradient To with Opacity -->
+                <div class="col-span-2">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Warna Gradient Akhir</label>
+                    <div class="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-xl p-3">
+                        <input type="color" id="addToColor" value="#8AAEE0"
+                               class="w-10 h-10 rounded-lg border-0 cursor-pointer bg-transparent flex-shrink-0"
+                               oninput="updateGradientValue('add', 'to')">
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-[10px] font-bold text-slate-400">Opacity</span>
+                                <span id="addToOpacityLabel" class="text-[10px] font-black text-slate-700">100%</span>
+                            </div>
+                            <input type="range" id="addToOpacity" min="0" max="100" value="100"
+                                   class="w-full h-1.5 rounded-full accent-color1 cursor-pointer"
+                                   oninput="updateGradientValue('add', 'to')">
+                        </div>
+                        <div id="addToPreview" class="w-8 h-8 rounded-lg border border-slate-200 flex-shrink-0" style="background-color: #8AAEE0"></div>
+                    </div>
+                    <input type="hidden" id="addToHidden" name="gradient_to" value="#8AAEE0">
                 </div>
+
+                <!-- Live Preview -->
+                <div class="col-span-2">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Preview Gradient</label>
+                    <div id="addGradientPreview" class="w-full h-16 rounded-xl border border-slate-100" style="background: linear-gradient(135deg, #628ECB, #8AAEE0)"></div>
+                </div>
+
                 <div class="col-span-2">
                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Background Image (Opsional)</label>
                     <input type="file" name="image" class="w-full bg-slate-50 border border-slate-100 rounded-xl p-3 text-xs font-bold outline-none">
@@ -142,7 +183,7 @@
     </div>
 </div>
 
-<!-- Edit Modal (Simplified logic for now) -->
+<!-- Edit Modal -->
 <div id="editBillboardModal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-6">
     <div class="bg-white rounded-[40px] p-10 w-full max-w-xl shadow-2xl">
         <h3 class="text-2xl font-black text-slate-800 mb-8 tracking-tighter">Edit Billboard</h3>
@@ -158,20 +199,61 @@
                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Sub-judul</label>
                     <input type="text" name="subtitle" id="editSubtitle" class="w-full bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm font-bold outline-none focus:ring-2 focus:ring-color1/20">
                 </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Warna Gradient Dari</label>
-                    <input type="color" name="gradient_from" id="editFrom" class="w-full h-12 bg-slate-50 border border-slate-100 rounded-xl p-1">
+
+                <!-- Gradient From with Opacity -->
+                <div class="col-span-2">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Warna Gradient Awal</label>
+                    <div class="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-xl p-3">
+                        <input type="color" id="editFromColor" value="#628ECB"
+                               class="w-10 h-10 rounded-lg border-0 cursor-pointer bg-transparent flex-shrink-0"
+                               oninput="updateGradientValue('edit', 'from')">
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-[10px] font-bold text-slate-400">Opacity</span>
+                                <span id="editFromOpacityLabel" class="text-[10px] font-black text-slate-700">100%</span>
+                            </div>
+                            <input type="range" id="editFromOpacity" min="0" max="100" value="100"
+                                   class="w-full h-1.5 rounded-full accent-color1 cursor-pointer"
+                                   oninput="updateGradientValue('edit', 'from')">
+                        </div>
+                        <div id="editFromPreview" class="w-8 h-8 rounded-lg border border-slate-200 flex-shrink-0" style="background-color: #628ECB"></div>
+                    </div>
+                    <input type="hidden" id="editFromHidden" name="gradient_from" value="#628ECB">
                 </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Warna Gradient Ke</label>
-                    <input type="color" name="gradient_to" id="editTo" class="w-full h-12 bg-slate-50 border border-slate-100 rounded-xl p-1">
+
+                <!-- Gradient To with Opacity -->
+                <div class="col-span-2">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Warna Gradient Akhir</label>
+                    <div class="flex items-center gap-3 bg-slate-50 border border-slate-100 rounded-xl p-3">
+                        <input type="color" id="editToColor" value="#8AAEE0"
+                               class="w-10 h-10 rounded-lg border-0 cursor-pointer bg-transparent flex-shrink-0"
+                               oninput="updateGradientValue('edit', 'to')">
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="text-[10px] font-bold text-slate-400">Opacity</span>
+                                <span id="editToOpacityLabel" class="text-[10px] font-black text-slate-700">100%</span>
+                            </div>
+                            <input type="range" id="editToOpacity" min="0" max="100" value="100"
+                                   class="w-full h-1.5 rounded-full accent-color1 cursor-pointer"
+                                   oninput="updateGradientValue('edit', 'to')">
+                        </div>
+                        <div id="editToPreview" class="w-8 h-8 rounded-lg border border-slate-200 flex-shrink-0" style="background-color: #8AAEE0"></div>
+                    </div>
+                    <input type="hidden" id="editToHidden" name="gradient_to" value="#8AAEE0">
                 </div>
+
+                <!-- Live Preview -->
+                <div class="col-span-2">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Preview Gradient</label>
+                    <div id="editGradientPreview" class="w-full h-16 rounded-xl border border-slate-100" style="background: linear-gradient(135deg, #628ECB, #8AAEE0)"></div>
+                </div>
+
                 <div>
                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Order</label>
                     <input type="number" name="order" id="editOrder" class="w-full bg-slate-50 border border-slate-100 rounded-xl p-3 text-sm font-bold">
                 </div>
                 <div>
-                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Image</label>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Ganti Image (Opsional)</label>
                     <input type="file" name="image" class="w-full bg-slate-50 border border-slate-100 rounded-xl p-3 text-[10px] font-bold">
                 </div>
             </div>
@@ -185,23 +267,104 @@
 </div>
 
 <script>
+    /**
+     * Parse sebuah hex color (6 atau 8 karakter) menjadi {hex, opacity}
+     * Contoh: '#628ecb80' => { hex: '#628ecb', opacity: 50 }
+     *         '#628ecb'   => { hex: '#628ecb', opacity: 100 }
+     */
+    function parseHexColor(hexRaw) {
+        const hex = hexRaw ? hexRaw.trim() : '#000000';
+        if (hex.length === 9) { // #RRGGBBAA
+            const alpha = parseInt(hex.slice(7, 9), 16);
+            return { hex: hex.slice(0, 7), opacity: Math.round((alpha / 255) * 100) };
+        }
+        return { hex: hex.length >= 7 ? hex.slice(0, 7) : '#000000', opacity: 100 };
+    }
+
+    /**
+     * Konversi hex color + opacity (0-100) menjadi 8-char hex (#RRGGBBAA)
+     */
+    function buildHexWithAlpha(hex, opacity) {
+        if (opacity >= 100) return hex; // simpan sebagai 6-char jika fully opaque
+        const alpha = Math.round((opacity / 100) * 255);
+        return hex + alpha.toString(16).padStart(2, '0');
+    }
+
+    /**
+     * Update hidden input, preview box, label, dan gradient preview.
+     * @param {string} context - 'add' atau 'edit'
+     * @param {string} side    - 'from' atau 'to'
+     */
+    function updateGradientValue(context, side) {
+        const prefix = context.charAt(0).toUpperCase() + context.slice(1); // 'Add' | 'Edit'
+        const sideCap = side.charAt(0).toUpperCase() + side.slice(1);      // 'From' | 'To'
+
+        const colorEl   = document.getElementById(`${context}${sideCap}Color`);
+        const opacityEl = document.getElementById(`${context}${sideCap}Opacity`);
+        const labelEl   = document.getElementById(`${context}${sideCap}OpacityLabel`);
+        const previewEl = document.getElementById(`${context}${sideCap}Preview`);
+        const hiddenEl  = document.getElementById(`${context}${sideCap}Hidden`);
+
+        const hex = colorEl.value;
+        const opacity = parseInt(opacityEl.value);
+        const finalHex = buildHexWithAlpha(hex, opacity);
+
+        labelEl.textContent  = opacity + '%';
+        previewEl.style.backgroundColor = hexToRgba(hex, opacity);
+        hiddenEl.value = finalHex;
+
+        // Update gradient preview box
+        const fromHidden = document.getElementById(`${context}FromHidden`).value;
+        const toHidden   = document.getElementById(`${context}ToHidden`).value;
+        const gradientEl = document.getElementById(`${context}GradientPreview`);
+        gradientEl.style.background = `linear-gradient(135deg, ${fromHidden}, ${toHidden})`;
+    }
+
+    /**
+     * Helper: hex + opacity% => rgba string (untuk preview box bg)
+     */
+    function hexToRgba(hex, opacity) {
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        return `rgba(${r}, ${g}, ${b}, ${opacity / 100})`;
+    }
+
+    /**
+     * Set nilai semua input di satu sisi (from/to) berdasarkan hex mentah dari DB.
+     */
+    function setColorInputs(context, side, rawHex) {
+        const sideCap = side.charAt(0).toUpperCase() + side.slice(1);
+        const { hex, opacity } = parseHexColor(rawHex);
+
+        document.getElementById(`${context}${sideCap}Color`).value  = hex;
+        document.getElementById(`${context}${sideCap}Opacity`).value = opacity;
+        document.getElementById(`${context}${sideCap}OpacityLabel`).textContent = opacity + '%';
+        document.getElementById(`${context}${sideCap}Preview`).style.backgroundColor = hexToRgba(hex, opacity);
+        document.getElementById(`${context}${sideCap}Hidden`).value = rawHex ?? hex;
+    }
+
     function editBillboard(bb) {
         const modal = document.getElementById('editBillboardModal');
-        const form = document.getElementById('editForm');
+        const form  = document.getElementById('editForm');
         form.action = `/admin/billboards/${bb.id}`;
-        
-        document.getElementById('editTitle').value = bb.title;
+
+        document.getElementById('editTitle').value    = bb.title;
         document.getElementById('editSubtitle').value = bb.subtitle || '';
-        document.getElementById('editFrom').value = bb.gradient_from;
-        document.getElementById('editTo').value = bb.gradient_to;
-        document.getElementById('editOrder').value = bb.order;
-        
+        document.getElementById('editOrder').value    = bb.order;
+
+        setColorInputs('edit', 'from', bb.gradient_from);
+        setColorInputs('edit', 'to',   bb.gradient_to);
+
+        // Refresh gradient preview
+        document.getElementById('editGradientPreview').style.background =
+            `linear-gradient(135deg, ${bb.gradient_from}, ${bb.gradient_to})`;
+
         modal.classList.remove('hidden');
     }
 
     @if($errors->any())
         document.addEventListener('DOMContentLoaded', function() {
-            // Kita tidak tahu modal mana yang error, tapi untuk kemudahan kita buka add modal
             document.getElementById('addBillboardModal').classList.remove('hidden');
         });
     @endif
