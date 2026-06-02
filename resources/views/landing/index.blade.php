@@ -68,7 +68,7 @@
             </div>
 
             <h1 class="text-5xl md:text-8xl font-black leading-[1.05] mb-10 max-w-5xl tracking-tight">
-                Satu Platform, <br><span class="text-gradient">Ribuan Solusi Jasa.</span>
+                LIMA Platform, <br><span class="text-gradient">Ribuan Solusi Jasa.</span>
             </h1>
 
             <p class="text-lg md:text-2xl text-gray-500 mb-12 max-w-2xl leading-relaxed">
